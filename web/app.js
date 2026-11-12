@@ -405,6 +405,7 @@ async function start() {
     await state.rtc.join(config.rtc.provider, created.viewer, { artcTokenShape: element('artcTokenShape').value });
     if (version !== state.version) return;
     state.running = true; state.history = [];
+    setCanvasMode(true);
     if (experience === 'monet') state.monet = createMonetDirector();
     api('/api/interaction/event', { type: 'live_start', live_id: created.live.id }).catch(() => {});
     element('viduStatus').textContent = '渲染连接就绪';
@@ -444,6 +445,7 @@ async function stopSession() {
   await stopEditing(false);
   const live = state.live; const rtc = state.rtc; const stream = state.stream;
   state.live = state.rtc = state.stream = null; state.running = state.starting = false;
+  setCanvasMode(false);
   stream?.close();
   if (rtc) await rtc.leave();
   if (live) await api(`/api/live/${live.id}/close`, {}).catch(report);
