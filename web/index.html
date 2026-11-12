@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>S2 Live Studio · 数字人直播间</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a href="#studio" class="skip">跳至直播工作台</a>
+  <button id="canvasExit" class="canvas-exit" hidden>退出 16:9 画布</button>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="S2 Live Studio 首页"><span class="brandmark">S2</span></a>
+    <nav aria-label="工作台导航"><a href="#studio" class="active">直播工作台</a><a href="#wardrobe">形象与换装</a><a href="/atlas.html" target="_blank" rel="noopener">业务链路</a><a href="/voices/" target="_blank" rel="noopener">音色试听</a><a href="/showroom/" target="_blank" rel="noopener">样板间</a><button id="consoleButton" class="quiet">中控台 <span aria-hidden="true">≡</span></button><button id="canvasButton" class="quiet">16:9 画布</button><button id="settingsButton" class="quiet">连接设置 <span aria-hidden="true">↗</span></button></nav>
+    <span class="local-label"><i></i> 云端工作空间</span>
+  </header>
+  <main id="studio">
+    <section class="heading">
+      <div><p class="eyebrow">YOUR AVATAR. YOUR SHOW.</p></div>
+      <div class="header-actions"><span id="roomStatus" class="status">未开播</span><button id="startButton" class="primary"><span aria-hidden="true">▶</span> 开始直播</button><button id="stopButton" class="danger" hidden>结束直播</button></div>
+    </section>
+    <div id="notice" class="notice" role="status">正在检查本机连接设置…</div>
+    <section class="monet-panel panel" aria-labelledby="monetTitle" hidden>
+      <div class="monet-heading"><div><p class="eyebrow">MONET · INFINITE CANVAS</p><h2 id="monetTitle">一个有性格的画布伙伴</h2></div><div><label for="experience">本次交互</label><select id="experience"><option value="studio">自由直播 · 原有模式</option><option value="monet">莫奈 · 自然交互</option></select></div></div>
+      <div class="monet-actions"><button id="monetAvatar" class="secondary">载入已有公开人物图</button><button id="monetDemo" class="secondary" disabled>自动演示一轮对话</button><button id="monetMatrix" class="secondary" disabled>逐项试演 50 个动作</button><button id="monetCancel" class="secondary" disabled>停止试演</button><button id="monetVisitor" class="secondary" disabled>迎接下一位</button><button id="monetClosing" class="secondary" disabled>自然告别</button><button id="monetExport" class="secondary" disabled>导出运行记录</button></div>
+      <p id="monetStatus" class="monet-status" role="status">选择莫奈模式后开播。</p>
+      <details id="monetDetails"><summary>人设、素材条件与单动作试演</summary><div class="monet-grid"><div><label for="monetPersona">完整人设（只读，不覆盖原主持人设置）</label><textarea id="monetPersona" rows="7" readonly></textarea></div><div><label for="monetBackground">宏大幻想背景 · 选用已上传的参考图</label><select id="monetBackground"><option value="">请先上传背景参考图</option></select><label for="monetAction">单动作</label><select id="monetAction"></select><button id="monetActionRun" class="secondary full" disabled>试演选中动作</button><label for="monetIdle">无人继续说话时的告别</label><select id="monetIdle"><option value="0">不按沉默计时 · 仅明确告别</option><option value="45000">回复结束后45秒无输入</option><option value="90000">回复结束后90秒无输入</option></select><div id="monetRequirements" class="monet-requirements"></div></div></div></details>
+    </section>
+    <div class="workspace">
+      <aside id="wardrobe" class="panel wardrobe">
+        <div class="panel-heading"><div><p class="eyebrow">APPEARANCE</p><h2>形象与换装</h2></div><span id="outfitCount" class="count">0</span></div>
+        <label class="upload-zone" for="avatarFile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M4 16v4h16v-4"/></svg><strong>上传形象 / 已有造型</strong><span>PNG、JPG、WebP · 50MB 内大图自动压缩</span></label>
+        <input id="avatarFile" type="file" accept="image/png,image/jpeg,image/webp" class="visually-hidden">
+        <div id="outfitList" class="outfit-list"><p class="empty-small">造型库还是空的。<br>上传后可在这里预览、选择和切换。</p></div>
+        <div class="section-rule"></div>
+        <div class="row"><h3>备选形象</h3><span class="tag">点击即用</span></div>
+        <div id="lookStrip" class="look-strip" aria-label="备选主播形象"></div>
+        <div class="section-rule"></div>
+        <div class="row"><h3>实时换装</h3><span class="tag">S2-Editing</span></div>
+        <label for="editingType">编辑场景</label><select id="editingType"><option value="virtual_tryon">虚拟试穿 · 换服装</option><option value="background_replacement">更换背景</option><option value="style_transfer">整体风格迁移</option><option value="subject_replacement">替换主体</option></select>
+        <label class="upload-zone reference-upload" for="referenceFile"><img id="referencePreview" alt="编辑参考图片" hidden><strong id="referenceName">上传参考图</strong></label><input id="referenceFile" type="file" accept="image/png,image/jpeg,image/webp" class="visually-hidden">
+        <label for="referenceSelect" class="visually-hidden">已上传的参考图</label><select id="referenceSelect"><option value="">请选择参考图</option></select>
+        <button id="editingButton" class="secondary full" disabled>开启实时换装</button><button id="stopEditing" class="secondary full" hidden>返回原始形象</button><button id="confirmEditing" class="secondary full" hidden>画面已符合预期</button>
+        <p id="editingStatus" class="help" role="status">开播后上传参考图开启换装。</p>
+      </aside>
+      <section class="stage-column" aria-label="直播画面与控制">
+        <div class="stage-header"><span><i id="liveDot"></i><b id="stageLabel">画面预览</b></span><span id="frameInfo">尚未接收视频流</span></div>
+        <div class="stage" id="stage">
+          <div class="stage-live" id="stageLive">
+            <div id="videoHost" class="video-host"><video id="remoteVideo" autoplay playsinline></video></div>
+            <img id="previewImage" class="preview-image" alt="选中的数字人形象预览" hidden>
+            <div id="stageEmpty" class="stage-empty"><div class="viewfinder"><svg viewBox="0 0 120 140" aria-hidden="true"><circle cx="60" cy="42" r="22"/><path d="M22 117v-13c0-22 17-36 38-36s38 14 38 36v13M4 24V4h20M96 4h20v20M4 116v20h20M96 136h20v-20"/></svg></div><p class="eyebrow">THE STAGE IS YOURS</p><h2>从一张图开始你的直播</h2><button id="stageUpload" class="secondary">选择形象图片 <span aria-hidden="true">↗</span></button></div>
+            <span id="previewBadge" class="stage-badge">预览 · 非直播画面</span>
+            <div id="subtitle" class="subtitle" hidden></div>
+            <div class="stage-corner top-left"></div><div class="stage-corner bottom-right"></div>
+          </div>
+          <div class="danmaku-ticker" id="danmakuTicker" aria-label="直播弹幕">
+            <span class="ticker-label">弹幕</span>
+            <div class="danmaku-track" id="danmakuTrack"></div>
+          </div>
+        </div>
+        <div class="controlbar"><div><span class="muted">当前形象</span><strong id="currentOutfit">尚未选择</strong></div><div class="control-actions"><button id="micButton" class="secondary" disabled aria-pressed="false">开启语音输入</button><button id="interruptButton" class="secondary" disabled>打断播报</button><button id="recordButton" class="secondary" disabled aria-pressed="false" title="默认录制当前直播页并包含主播声音；分享弹窗中请保持勾选「同时分享标签页音频」">⏺ 开始录屏</button><button id="fullscreenButton" class="square" aria-label="画面全屏"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div></div>
+        <div class="connection-strip" aria-label="组件配置状态"><div><span class="node-icon">R</span><span><b>recaption 3.4</b><small id="llmStatus">检查中</small></span></div><span class="arrow">→</span><div><span class="node-icon">M</span><span><b>MiniMax</b><small id="minimaxStatus">检查中</small></span></div><span class="arrow">→</span><div><span class="node-icon">S2</span><span><b>Vidu 渲染</b><small id="viduStatus">检查中</small></span></div><span class="arrow">→</span><div><span class="node-icon">RTC</span><span><b id="rtcName">RTC</b><small id="rtcStatus">检查中</small></span></div></div>
+        <details class="logs-panel"><summary>运行日志 <span id="logSummary">等待操作</span></summary><div id="logs" role="log" aria-label="运行日志"></div></details>
+      </section>
+      <aside class="panel conversation-panel">
+        <div class="panel-heading"><div><p class="eyebrow">ON AIR CONVERSATION</p><h2>直播对话</h2></div><span class="tag">recaption</span></div>
+        <div class="host-card"><div class="voice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6m4-10v14m4-17v20m4-17v14m4-10v6"/></svg></div><div><strong>音色试听</strong><p>24kHz 单声道</p></div><button id="voicePreview" class="square" aria-label="试听音色"><span aria-hidden="true">▶</span></button></div>
+        <div id="conversation" class="conversation" role="log" aria-label="对话记录"><div id="chatEmpty" class="chat-empty"><span class="quote">“</span><h3>第一句话，交给你。</h3></div></div>
+        <div id="turnStatus" class="turn-status" role="status">等待开始直播</div>
+        <form id="chatForm"><label for="chatInput" class="visually-hidden">给主播发消息</label><textarea id="chatInput" rows="3" maxlength="2000" placeholder="想和主播聊些什么？" disabled></textarea><div class="composer-footer"><span>Enter 发送</span><button id="sendButton" type="submit" class="primary" disabled aria-label="发送消息">发送 <span aria-hidden="true">↑</span></button></div></form>
+      </aside>
+    </div>
+    <footer><span>S2 LIVE STUDIO</span><p>语音 → recaption → TTS → Vidu → RTC</p></footer>
+  </main>
+  <dialog id="settingsDialog" aria-labelledby="settingsTitle">
+    <form id="settingsForm"><div class="dialog-heading"><div><p class="eyebrow">CONNECTION SETTINGS</p><h2 id="settingsTitle">连接你的组件</h2></div><button type="button" id="closeSettings" class="square" aria-label="关闭连接设置">×</button></div>
+      <p class="help">密钥仅存本机；密码框留空保留原值。</p>
+      <fieldset><legend>Vidu · 数字人渲染</legend><label for="viduKey">API Key <span id="viduKeySet"></span></label><input id="viduKey" type="password" autocomplete="new-password" placeholder="留空保留已配置密钥"><label for="viduHost">接入环境</label><select id="viduHost"><option value="api.vidu.cn">国内 · api.vidu.cn</option><option value="api.vidu.com">海外 · api.vidu.com</option></select></fieldset>
+      <fieldset><legend>recaption 3 · 对话（Vidu）</legend><label for="llmKey">API Key <span id="llmKeySet"></span></label><input id="llmKey" type="password" autocomplete="new-password" placeholder="留空复用 Vidu 渲染 Key"><label for="llmModel">模型</label><select id="llmModel"><option value="recaption3.4">recaption3.4（推荐）</option><option value="recaption3.4-flash">recaption3.4-flash（多模态）</option><option value="recaption3.4-flashx">recaption3.4-flashx</option><option value="recaption3.3">recaption3.3</option><option value="recaption3.2">recaption3.2</option><option value="recaption3.1">recaption3.1</option><option value="recaption3.1-turbo">recaption3.1-turbo</option></select><label for="persona">主持人人设</label><textarea id="persona" rows="3" maxlength="5000"></textarea></fieldset>
+      <fieldset><legend>Soul · 声音（主链路 · 克隆音色）</legend><label for="soulKey">API Key <span id="soulKeySet"></span></label><input id="soulKey" type="password" autocomplete="new-password" placeholder="留空保留原值"><label for="voiceProfile">音色</label><div style="display:flex;gap:8px;align-items:center"><select id="voiceProfile" style="flex:1"></select><button type="button" id="voiceAudition" class="secondary" style="flex:0 0 auto;white-space:nowrap">试听</button></div><p class="help" id="voiceProfileHint"></p></fieldset>
+      <fieldset><legend>MiniMax · 声音（回落链路）</legend><label for="minimaxKey">API Key <span id="minimaxKeySet"></span></label><input id="minimaxKey" type="password" autocomplete="new-password" placeholder="填写 MiniMax API Key"><div class="form-grid"><div><label for="minimaxModel">语音模型</label><input id="minimaxModel" required></div><div><label for="voiceSpeed">语速</label><input id="voiceSpeed" type="number" min="0.5" max="2" step="0.1" required></div></div></fieldset>
+      <fieldset><legend>RTC · 视频传输</legend><p id="inheritHint" class="help"></p><label for="rtcProvider">RTC 服务商</label><select id="rtcProvider"><option value="trtc">腾讯 TRTC</option><option value="artc">阿里 ARTC</option><option value="agora">声网 Agora</option></select><div id="rtcFields"></div><div id="artcShapeField" hidden><label for="artcTokenShape">ARTC token形态</label><select id="artcTokenShape"><option value="authinfo">JSON信封（默认）</option><option value="raw">裸签名串</option></select></div></fieldset>
+      <p id="settingsError" role="alert" class="error-text"></p><div class="dialog-footer"><button type="button" id="cancelSettings" class="secondary">取消</button><button type="submit" id="saveSettings" class="primary">保存连接设置</button></div>
+    </form>
+  </dialog>
+  <dialog id="outfitDialog" aria-labelledby="outfitTitle"><div class="dialog-heading"><h2 id="outfitTitle">预览出镜造型</h2><button id="closeOutfit" class="square" aria-label="关闭造型预览">×</button></div><img id="candidateImage" alt="候选造型预览"><select id="outfitPersona" aria-label="绑定人设"></select><p id="candidateNote" class="help"></p><div class="dialog-footer"><button id="deleteOutfit" class="secondary">删除造型</button><button id="applyOutfit" class="primary">选为出镜形象</button></div></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <aside id="consoleDrawer" class="console-drawer" aria-label="互动组合策略中控台" hidden>
+    <div class="drawer-header"><div><p class="eyebrow">INTERACTION CONSOLE</p><h2>中控台</h2></div><button id="closeConsole" class="square" aria-label="关闭中控台">×</button></div>
+    <div id="consoleBody" class="drawer-body">
+      <section class="drawer-section" aria-labelledby="csPersona"><h3 id="csPersona">人设 · 音色 · 开场白</h3>
+        <div id="personaList" class="persona-list"></div>
+        <h4 class="sub">音色 <span class="tag">女 / 男双轨</span></h4>
+        <label for="voiceFemaleSelect">女声音色</label><select id="voiceFemaleSelect"></select>
+        <label for="voiceMaleSelect">男声音色</label><select id="voiceMaleSelect"></select>
+        <div class="sim-row">
+          <button id="detectVoice" class="secondary">形象匹配</button>
+          <button id="auditionVoice" class="secondary">试听</button>
+        </div>
+        <p class="help" id="detectNote" hidden></p>
+        <h4 class="sub">开场白 <span class="tag">留空用人设默认</span></h4>
+        <label for="openingText" class="visually-hidden">自定义开场白</label>
+        <textarea id="openingText" rows="3" placeholder="自定义开场白，画面就绪后自动口播；留空则按当前人设即兴生成"></textarea>
+        <button id="saveOpening" class="secondary full">保存开场白</button>
+      </section>
+      <section class="drawer-section" aria-labelledby="csTrigger"><h3 id="csTrigger">主动唤醒</h3>
+        <div class="form-grid">
+          <div><label for="cfgCold">冷启动延迟（秒）</label><input id="cfgCold" type="number" min="0" step="1"></div>
+          <div><label for="cfgSilence">冷场阈值（秒）</label><input id="cfgSilence" type="number" min="0" step="1"></div>
+          <div><label for="cfgIdle">静默微动作间隔（秒）</label><input id="cfgIdle" type="number" min="5" step="1"></div>
+          <div><label for="cfgTalent">才艺锚点（分钟）</label><input id="cfgTalent" type="number" min="1" step="1"></div>
+          <div><label for="cfgVote">PK拉票间隔（秒）</label><input id="cfgVote" type="number" min="5" step="1"></div>
+          <div><label for="cfgChat">闲聊响应概率</label><input id="cfgChat" type="number" min="0" max="1" step="0.1"></div>
+        </div>
+        <button id="saveTriggers" class="secondary full">保存唤醒参数</button>
+      </section>
+      <section class="drawer-section" aria-labelledby="csGift"><h3 id="csGift">礼物档位</h3>
+        <div class="form-grid"><div><label for="tierLowMax">低档上限（元）</label><input id="tierLowMax" type="number" min="0"></div><div><label for="tierMidMax">中档上限（元）</label><input id="tierMidMax" type="number" min="0"></div></div>
+        <button id="saveTiers" class="secondary full">保存礼物档位</button>
+      </section>
+      <section class="drawer-section" aria-labelledby="csMatrix"><h3 id="csMatrix">意图矩阵</h3><div id="intentMatrix" class="intent-matrix"></div></section>
+      <section class="drawer-section" aria-labelledby="csPlay"><h3 id="csPlay">互动玩法</h3>
+        <h4 class="sub">小游戏 <span class="tag">弹幕即手柄</span></h4>
+        <div class="sim-row">
+          <label for="gameSelect" class="visually-hidden">游戏</label>
+          <select id="gameSelect"></select>
+          <button id="gameStart" class="primary">开局</button>
+          <button id="gameStop" class="secondary">收局</button>
+        </div>
+        <p class="help" id="gameHint">开局后观众弹幕直接参与；游戏中送中档以上礼物可向主播买情报。</p>
+        <h4 class="sub">直播礼物特效 <span class="tag">点击即后台生成</span></h4>
+        <div class="sim-row quick" id="fxChips">
+          <button class="chip" data-fx="wizard_of_oz">🌲 绿野仙踪</button>
+          <button class="chip" data-fx="angel_wings">👼 天使之翼</button>
+          <button class="chip" data-fx="boxing_punch">🥊 PK挥拳</button>
+          <button class="chip" data-fx="cream_prank">🎂 扔蛋糕</button>
+          <button class="chip" data-fx="mushroom">🍄 还童蘑菇</button>
+          <button class="chip" data-fx="watermelon_smash">🍉 砸西瓜</button>
+        </div>
+      </section>
+      <section class="drawer-section" aria-labelledby="csGen"><h3 id="csGen">现场生成 <span class="tag">实时调接口</span></h3>
+        <h4 class="sub">唱歌 / 跳舞</h4>
+        <div class="sim-row"><label for="singMusic" class="visually-hidden">曲目</label><select id="singMusic"></select><button id="reloadMusic" class="square" aria-label="刷新曲目">↻</button></div>
+        <div class="sim-row">
+          <button id="singStart" class="primary">实时开唱</button>
+          <button id="singStop" class="secondary" disabled>停止</button>
+        </div>
+        <progress id="singProgress" value="0" max="100" hidden></progress>
+        <div class="sim-row">
+          <label for="danceEngine" class="visually-hidden">引擎</label>
+          <select id="danceEngine">
+            <option value="mv2">MV Agent 2.0</option>
+            <option value="mv1">MV Agent 1.0</option>
+            <option value="motion_control">Motion Control</option>
+            <option value="motion_sync">Motion Sync 跳舞</option>
+          </select>
+          <select id="mvMode">
+            <option value="sing">对口型</option>
+            <option value="sing_perform">对口型＋演绎</option>
+            <option value="perform">纯演绎</option>
+            <option value="dance">跳舞</option>
+          </select>
+        </div>
+        <div class="sim-row"><button id="mvCreate" class="primary">生成</button></div>
+        <div class="sim-row" id="motionRefRow" hidden><input id="motionRefVideo" placeholder="动作参考视频 URL（2-30s，超尺寸自动转码）"></div>
+        <div class="sim-row" id="mvVideoRow" hidden><input id="mvVideoUrl" placeholder="MV 视频链接（提取音轨当歌曲，选填）"></div>
+        <div class="sim-row" id="mvPromptRow" hidden><input id="mvPrompt" placeholder="MV 提示词（已预填固定女主播提示词）"></div>
+        <p class="help" id="mvStatusHelp" hidden></p>
+        <div class="sim-row">
+          <button id="mvPlay" class="primary" disabled>播放 MV</button>
+          <button id="mvRestore" class="secondary">恢复形象</button>
+        </div>
+        <div class="sim-row"><input id="mvAvatarId" placeholder="资产形象 ID（仅播放 MV / 恢复形象时需要，不参与生成）"></div>
+        <h4 class="sub">图生视频 <span class="tag">Q4 Preview</span></h4>
+        <label for="i2vPrompt" class="visually-hidden">提示词</label>
+        <textarea id="i2vPrompt" rows="2" placeholder="提示词（留空则用主播形象默认提示词）"></textarea>
+        <div class="sim-row">
+          <label for="i2vDuration" class="visually-hidden">时长</label>
+          <select id="i2vDuration"><option value="5">5 秒</option><option value="8">8 秒</option><option value="10">10 秒</option><option value="16">16 秒</option></select>
+          <label for="i2vResolution" class="visually-hidden">分辨率</label>
+          <select id="i2vResolution"><option value="540p">540p</option><option value="720p" selected>720p</option><option value="1080p">1080p</option></select>
+        </div>
+        <div class="sim-row"><button id="i2vCreate" class="primary">用当前形象生成</button></div>
+        <p class="help" id="i2vNote" hidden></p>
+      </section>
+      <section class="drawer-section" aria-labelledby="csLatin"><h3 id="csLatin">拉丁舞 · 双模式 <span class="tag">12s</span></h3>
+        <div class="sim-row">
+          <label for="latinMode" class="visually-hidden">舞蹈模式</label>
+          <select id="latinMode">
+            <option value="sequence">实时动作序列 · 1–2s/动作</option>
+            <option value="motion_sync">Motion Sync · 参考视频</option>
+          </select>
+        </div>
+        <div id="latinSequencePanel">
+          <p class="help">六段拉丁动作，逐条 type 9 下发；适合全身站姿，半身图请只用 Motion Sync。</p>
+          <div id="latinSequence" class="latin-sequence"></div>
+          <div class="sim-row"><button id="latinPlayAll" class="primary">播放整段 12s</button><button id="latinStop" class="secondary" disabled>停止</button></div>
+        </div>
+        <div id="latinMotionPanel" hidden>
+          <p class="help">公开可访问的 12s 拉丁舞参考视频，2–30s、宽高 ≤2048；生成后全屏覆盖播放。</p>
+          <div class="sim-row"><input id="latinRefVideo" placeholder="https://.../latin-dance-12s.mp4"></div>
+          <div class="sim-row"><label class="check-inline"><input id="latinReal" type="checkbox"> 真实生成（约 10 积分/秒）</label></div>
+          <div class="sim-row"><button id="latinUseUpload" class="secondary">用已上传视频</button><button id="latinGenerate" class="primary">生成 Motion Sync</button></div>
+        </div>
+        <p class="help" id="latinNote" hidden></p>
+      </section>
+      <section class="drawer-section" aria-labelledby="csReady"><h3 id="csReady">已生成视频 <span class="tag">上传 / 链接直播</span></h3>
+        <div class="sim-row"><input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" hidden><button id="videoUpload" class="secondary">上传视频（MV成片 / 跳舞）</button><button id="videoUploadPlay" class="primary" hidden>播放</button></div>
+        <div class="sim-row"><input id="overlayVideoUrl" placeholder="公开可访问的视频链接（特效/跳舞成片，直接覆盖播放）"><button id="overlayPlay" class="secondary">播放</button></div>
+      </section>
+      <section class="drawer-section" aria-labelledby="csSim"><h3 id="csSim">事件模拟</h3>
+        <label for="danmakuInput" class="visually-hidden">模拟弹幕</label>
+        <div class="sim-row"><input id="danmakuInput" maxlength="300" placeholder="输入弹幕，模拟观众发言"><button id="sendDanmaku" class="primary">发送</button></div>
+        <div class="sim-row quick">
+          <button class="chip" data-comment="换那套红色裙子">换红裙</button>
+          <button class="chip" data-comment="去海边">去海边</button>
+          <button class="chip" data-comment="跳个舞">跳个舞</button>
+          <button class="chip" data-comment="主播多大？">提问</button>
+          <button class="chip" data-comment="哈哈哈哈好美">闲聊</button>
+          <button class="chip" data-comment="加微信低价代刷">引流(P5)</button>
+        </div>
+        <div class="sim-row quick">
+          <button class="chip" data-gift="6">❤️ 小心心 ¥6</button>
+          <button class="chip" data-gift="66">💎 灯牌 ¥66</button>
+          <button class="chip" data-gift="1000">🚀 火箭 ¥1000</button>
+          <button class="chip" data-pk="start">PK 发起</button>
+          <button class="chip" data-pkend="win">PK 胜</button>
+          <button class="chip" data-pkend="lose">PK 负</button>
+        </div>
+        <div class="sim-row"><button id="autoDanmaku" class="secondary" aria-pressed="false">🤖 自动弹幕 关</button></div>
+      </section>
+      <section class="drawer-section" aria-labelledby="csFeed"><h3 id="csFeed">调度时间线 <span class="tag" id="phaseBadge">待机</span></h3>
+        <div id="consoleFeed" class="console-feed" role="log" aria-label="互动调度时间线"></div>
+      </section>
+    </div>
+  </aside>
+  <script type="module" src="/app.js"></script>
+  <script type="module" src="/console.js"></script>
+</body>
+</html>

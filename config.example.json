@@ -1,0 +1,54 @@
+{
+  "vidu": {
+    "api_key": "",
+    "host": "api.vidu.cn"
+  },
+  "rtc": {
+    "provider": "trtc",
+    "artc": {
+      "app_id": "",
+      "app_key": "",
+      "token_ttl_seconds": 3600
+    },
+    "agora": {
+      "app_id": "",
+      "app_certificate": "",
+      "token_ttl_seconds": 3600
+    },
+    "trtc": {
+      "sdk_app_id": 0,
+      "secret_key": "",
+      "token_ttl_seconds": 3600
+    }
+  },
+  "llm": {
+    "api_key": "",
+    "model": "recaption3.4",
+    "base_url": "https://api.vidu.cn/ent/v2"
+  },
+  "minimax": {
+    "api_key": "",
+    "model": "speech-2.8-turbo",
+    "voice_id": "female-shaonv",
+    "speed": 1.15
+  },
+  "soul": {
+    "api_key": "",
+    "model": "loxi-speech-1.0",
+    "base_url": "https://api.loxinity.com",
+    "voice_id": ""
+  },
+  "vlm": {
+    "api_key": "",
+    "model": "qwen3-vl-plus",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  },
+  "singing": {
+    "music_dir": "./music",
+    "default_avatar_id": ""
+  },
+  "live": {
+    "image_uri": "",
+    "persona": "你是一位自然、友好的中文直播主持人。直接回答观众的问题，每次回复不超过100字，适合口播。不编造商品信息。不用Markdown。"
+  }
+}

@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>S2 Live Studio · 业务链路动画</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>
+  :root{
+    --bg:#0d1017; --panel:rgba(255,255,255,.045); --panel-line:rgba(255,255,255,.1);
+    --fg:#eef1f8; --fg-dim:#c6cede; --muted:#8b97ad;
+    --signal:#22d3ee; --control:#a78bfa; --api:#f59e0b; --ai:#f472b6; --ok:#34d399; --warn:#fb923c;
+    --mono:'Cascadia Code',Consolas,'SF Mono',ui-monospace,monospace;
+    --display:'DM Sans','Segoe UI','Microsoft YaHei',sans-serif;
+    color-scheme:dark;
+  }
+  html,body{margin:0;background:
+    radial-gradient(1100px 600px at 12% -8%, rgba(64,50,140,.5) 0%, transparent 60%),
+    radial-gradient(900px 520px at 96% 6%, rgba(150,60,120,.32) 0%, transparent 55%),
+    var(--bg);
+    color:var(--fg);font:14.5px/1.65 'Segoe UI','Microsoft YaHei',sans-serif}
+  *{box-sizing:border-box}
+  .page{max-width:1460px;margin:0 auto;padding:36px 24px 56px}
+  .eyebrow{display:inline-block;color:var(--control);font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;padding:5px 10px;border:1px solid rgba(167,139,250,.35);border-radius:999px;background:rgba(124,108,255,.08)}
+  h1{font-family:var(--display);font-size:clamp(26px,3vw,38px);letter-spacing:-.02em;margin:14px 0 10px}
+  .lede{color:var(--fg-dim);max-width:820px;margin:0}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 18px;list-style:none;padding:0;margin:18px 0 0;color:var(--muted);font-size:12.5px}
+  .legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
+  .dot.sig{background:var(--signal)}.dot.ctl{background:var(--control)}.dot.api{background:var(--api)}.dot.ai{background:var(--ai)}.dot.ok{background:var(--ok)}
+
+  /* 场景切换 */
+  .scene-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:30px 0 14px}
+  .scene-tabs button{cursor:pointer;font:600 13.5px/1 'Segoe UI','Microsoft YaHei',sans-serif;color:var(--fg-dim);padding:11px 18px;border-radius:999px;border:1px solid var(--panel-line);background:var(--panel);transition:.18s}
+  .scene-tabs button:hover{border-color:rgba(167,139,250,.55)}
+  .scene-tabs button.active{color:#fff;background:linear-gradient(135deg,rgba(124,108,255,.35),rgba(200,109,215,.28));border-color:rgba(167,139,250,.7);box-shadow:0 6px 24px rgba(124,108,255,.25)}
+  .scene-note{color:var(--muted);font-size:12.5px;margin:0 0 18px}
+  .scene-note b{color:var(--fg-dim)}
+
+  .panel{position:relative;border:1px solid var(--panel-line);border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));box-shadow:0 24px 60px rgba(5,8,20,.5);overflow:hidden}
+  .panel svg{display:block;width:100%;height:auto}
+
+  /* 舞台元素 */
+  .grid-line{stroke:rgba(140,160,220,.07);stroke-width:1}
+  .station .halo{fill:none;stroke-width:1.5;opacity:.22}
+  .station .core{fill:#111625;stroke-width:1.5}
+  .station .icon{font-size:26px}
+  .station .title{fill:var(--fg);font-family:var(--display);font-size:14.5px;font-weight:600}
+  .station .sub{fill:var(--muted);font-family:var(--mono);font-size:10.5px}
+  .station.active .halo{opacity:.8;filter:url(#glow)}
+  .station.active .core{fill:#1a2140}
+  .station .pulse-ring{fill:none;stroke-width:2;opacity:0}
+  .route{fill:none;stroke-width:2.2;stroke-linecap:round;stroke-dasharray:3 11;opacity:.5;filter:url(#glow)}
+  .courier-shadow{fill:rgba(0,0,0,.4);filter:blur(4px)}
+  .courier-head{fill:#ffd7b0}
+  .courier-hair{fill:#3d2a55}
+  .courier-suit{fill:#8b7bff}
+  .courier-pack{fill:#c86dd7}
+  .limb{stroke:#ffd7b0;stroke-width:3.4;stroke-linecap:round}
+  .eye{fill:#3d2a55}
+  .smile{fill:none;stroke:#3d2a55;stroke-width:1.4;stroke-linecap:round}
+  .paused{animation-play-state:paused}
+  .bubble{background:rgba(13,17,30,.92);border:1px solid rgba(167,139,250,.4);border-radius:14px;padding:13px 15px;box-shadow:0 14px 40px rgba(5,8,20,.6);backdrop-filter:blur(8px)}
+  .bubble .step{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--control)}
+  .bubble h3{font-family:var(--display);margin:4px 0 6px;font-size:15.5px;font-weight:600}
+  .bubble p{margin:0;color:var(--fg-dim);font-size:12.5px;line-height:1.55}
+  .bubble p b{color:#ffd9a8}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+  .tag{font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.16);color:var(--fg-dim)}
+  .tag.hot{border-color:#7c3aed;color:#d8c6ff;background:rgba(27,18,54,.8)}
+  .tag.ok{border-color:#0f766e;color:#a7f3d0;background:rgba(8,42,39,.8)}
+  .tag.no{border-color:#9f1239;color:#fecdd3;background:rgba(42,13,24,.8)}
+
+  /* 控制条 */
+  .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--panel-line);background:rgba(255,255,255,.02)}
+  .btn{cursor:pointer;font:500 13px/1 'Segoe UI','Microsoft YaHei',sans-serif;color:var(--fg-dim);padding:9px 14px;border-radius:10px;border:1px solid var(--panel-line);background:rgba(255,255,255,.05)}
+  .btn:hover{border-color:#5b6b96;background:rgba(255,255,255,.09)}
+  .btn.primary{color:#fff;background:linear-gradient(135deg,#7c6cff,#c86dd7);border-color:transparent;box-shadow:0 6px 20px rgba(124,108,255,.3)}
+  select.btn{padding:9px 10px}
+  .progress{flex:1;min-width:140px;height:6px;border-radius:999px;background:rgba(255,255,255,.09);cursor:pointer}
+  .bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#7c6cff,#22d3ee);width:0%}
+  .scene-label{font-family:var(--mono);font-size:12px;color:var(--fg-dim);white-space:nowrap}
+
+  /* 客户场景卡 */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:30px}
+  .card{border:1px solid var(--panel-line);border-radius:18px;padding:18px;background:var(--panel)}
+  .card h3{font-family:var(--display);margin:0 0 4px;font-size:15.5px}
+  .card .who{font-family:var(--mono);font-size:11px;color:var(--control);letter-spacing:.08em}
+  .card ul{margin:10px 0 0;padding-left:18px;color:var(--fg-dim);font-size:13px}
+  .card li{margin:5px 0}
+  .card.hot{border-color:rgba(167,139,250,.55);background:linear-gradient(180deg,rgba(124,108,255,.14),rgba(200,109,215,.07));box-shadow:0 10px 36px rgba(124,108,255,.16)}
+  .foot{margin-top:44px;padding-top:20px;border-top:1px solid var(--panel-line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;color:var(--muted);font-family:var(--mono);font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <span class="eyebrow">S2 Live Studio · 业务链路</span>
+    <h1>一场直播的数据之旅</h1>
+    <p class="lede">信使小 V 带你走完一遍：观众的一句弹幕 / 一个礼物，如何经过中控台调度、人设台词、克隆音色合成，变成 Vidu 数字人的口播与画面，最终回到观众眼前。</p>
+    <ul class="legend">
+      <li><span class="dot sig"></span>观众互动 / 媒体</li>
+      <li><span class="dot ctl"></span>中控台调度</li>
+      <li><span class="dot api"></span>LLM 台词</li>
+      <li><span class="dot ok"></span>音色合成</li>
+      <li><span class="dot ai"></span>数字人渲染</li>
+    </ul>
+  </header>
+
+  <!-- 典型客户使用场景 -->
+  <div class="scene-tabs" id="tabs" role="tablist" aria-label="典型客户使用场景">
+    <button class="active" data-mode="sales">🛒 电商带货</button>
+    <button data-mode="talent">🎤 才艺娱乐</button>
+    <button data-mode="edu">📚 知识教育</button>
+  </div>
+  <p class="scene-note" id="sceneNote"></p>
+
+  <div class="panel stage-card">
+    <svg id="stage" viewBox="0 0 1500 950" role="img" aria-label="S2 直播业务链路动画">
+      <defs>
+        <filter id="glow" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="packetGrad">
+          <stop offset="0%" stop-color="#fff"/>
+          <stop offset="35%" stop-color="#a78bfa"/>
+          <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <g id="grid"></g>
+      <g id="routes"></g>
+      <g id="stations"></g>
+      <g id="courier" class="paused">
+        <ellipse class="courier-shadow" cx="0" cy="22" rx="20" ry="6"/>
+        <g id="courierBody">
+          <g id="legs">
+            <line class="limb leg-left" x1="-6" y1="8" x2="-9" y2="22"/>
+            <line class="limb leg-right" x1="6" y1="8" x2="9" y2="22"/>
+          </g>
+          <rect class="courier-suit" x="-13" y="-9" width="26" height="22" rx="8"/>
+          <rect class="courier-pack" x="10" y="-12" width="13" height="16" rx="4"/>
+          <g id="arms">
+            <line class="limb arm-left" x1="-12" y1="-5" x2="-22" y2="3"/>
+            <line class="limb arm-right" x1="12" y1="-5" x2="22" y2="3"/>
+          </g>
+          <circle class="courier-head" cx="0" cy="-22" r="12"/>
+          <path class="courier-hair" d="M-12,-24 C-11,-37, 11,-38, 12,-24 C8,-31, -8,-31, -12,-24Z"/>
+          <circle class="eye" cx="-4" cy="-23" r="1.7"/>
+          <circle class="eye" cx="4" cy="-23" r="1.7"/>
+          <path class="smile" d="M-4,-18 Q0,-15 4,-18"/>
+        </g>
+        <circle id="packet" r="8" fill="url(#packetGrad)" opacity=".95"/>
+      </g>
+      <g id="bubbleGroup">
+        <foreignObject id="bubbleFO" x="0" y="0" width="380" height="186">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%"><div class="bubble" id="bubble"></div></div>
+        </foreignObject>
+      </g>
+    </svg>
+    <div class="controls">
+      <button id="playBtn" class="btn primary">暂停</button>
+      <button id="restartBtn" class="btn">重播</button>
+      <button id="stepBtn" class="btn">下一步</button>
+      <select id="speedSel" class="btn" aria-label="播放速度">
+        <option value="0.6">0.6×</option><option value="1" selected>1.0×</option><option value="1.5">1.5×</option><option value="2">2.0×</option>
+      </select>
+      <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
+      <div class="scene-label" id="sceneLabel">01 / 09</div>
+    </div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+  <footer class="foot"><span>S2 Live Studio · 业务链路动画</span><span>协议字段速查见「连接设置」</span></footer>
+</div>
+<script>
+(() => {
+  'use strict';
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = id => document.getElementById(id);
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+  /* ---------- 典型客户使用场景 ---------- */
+  const MODES = {
+    sales: { name:'电商带货', persona:'带货主播 · 男声 B',
+      note:'观众问价、催优惠，主播按礼物档位控制福利节奏，口播始终导向转化。',
+      cards:['弹幕问价 → P3 提问插队回答，报价口径统一','¥66 灯牌 → 中档：致谢 + 氛围特效 + 上福利','PK 拉票 → 定时口播引导下单助力'] },
+    talent: { name:'才艺娱乐', persona:'甜美元气 / 搞笑互动',
+      note:'观众点歌点舞，唱歌走实时口型驱动，大礼物触发一键 MV 换形象演出。',
+      cards:['弹幕点舞 → P2 才艺：动作信令 + 点名回应','实时开唱 → 浏览器解码 24kHz PCM 推流驱动口型，P0 礼物可打断','🚀 火箭 → 高档：强制舞蹈 + 全屏特效 + 一键 MV'] },
+    edu: { name:'知识教育', persona:'知性优雅 · 女声 A',
+      note:'观众提问优先解答，才艺锚点变成知识分享，冷场自动接话题保热度。',
+      cards:['弹幕提问 → 排队机制保证先问先答','才艺锚点 → 每 N 分钟知识点/演示分享','冷场唤醒 → 沉默 N 秒自动抛话题互动'] },
+  };
+
+  /* ---------- 站点 ---------- */
+  const stations = {
+    audience: { x:150,  y:600, label:'观众',       sub:'弹幕 · 礼物 · 语音', icon:'👥', color:'#22d3ee' },
+    console:  { x:430,  y:600, label:'中控台',     sub:'意图分类 · 调度',   icon:'🎛️', color:'#a78bfa' },
+    llm:      { x:700,  y:300, label:'recaption',  sub:'人设化台词',        icon:'🧠', color:'#f59e0b' },
+    tts:      { x:960,  y:300, label:'Soul TTS',   sub:'克隆音色 · 24kHz',  icon:'🎤', color:'#34d399' },
+    s2:       { x:700,  y:600, label:'Vidu S2',    sub:'口型 · 动作 · 渲染', icon:'🎬', color:'#f472b6' },
+    rtc:      { x:970,  y:600, label:'RTC',        sub:'TRTC 媒体面',       icon:'📡', color:'#22d3ee' },
+    screen:   { x:700,  y:860, label:'直播画面',   sub:'特效 · MV 覆盖层',  icon:'🖥️', color:'#f59e0b' },
+  };
+
+  /* ---------- 旅程（每步带三种客户场景的典型例子） ---------- */
+  const scenes = [
+    { from:'audience', to:'console', color:'#22d3ee', bend:50,
+      title:'观众互动进入', text:'弹幕、礼物、语音实时进入中控台。', tags:[['comment','ok'],['gift','ok'],['pk','ok']],
+      ex:{ sales:'"多少钱？有优惠吗？"', talent:'"跳个舞！"', edu:'"这个知识点再讲一遍"' } },
+    { from:'console', to:'llm', color:'#a78bfa', bend:-45,
+      title:'意图分类 · 调度', text:'P0-P5 分级：礼物插队、提问排队、垃圾弹幕过滤，再交给 LLM 生成人设化台词。', tags:[['P0-P5 分级','hot'],['插队/排队','ok']],
+      ex:{ sales:'报价口径统一，催单话术', talent:'点播确认 + 互动玩梗', edu:'先问先答，通俗转译' } },
+    { from:'llm', to:'tts', color:'#f59e0b', bend:-40,
+      title:'台词 → 音色合成', text:'recaption 生成人设台词，Soul 克隆音色合成 24kHz PCM；Soul 未配置自动回落 MiniMax。', tags:[['Soul 克隆','ok'],['MiniMax 回落','ok']],
+      ex:{ sales:'男声 B · 热情带货腔', talent:'甜美元气 · 活泼', edu:'女声 A · 从容讲解' } },
+    { from:'tts', to:'s2', color:'#34d399', bend:40,
+      title:'口型驱动', text:'PCM 与文本送入直播 WS：音频驱动口型，type=9 同步动作信令。', tags:[['PCM 24kHz','ok'],['type=9 动作','hot']],
+      ex:{ sales:'讲价手势 + 点头', talent:'舞蹈/比心动作', edu:'双手讲解姿态' } },
+    { from:'s2', to:'rtc', color:'#f472b6', bend:45,
+      title:'渲染下行', text:'Vidu S2 渲染数字人音视频，经 RTC 媒体面下发。', tags:[['渲染','ok'],['RTC 下行','ok']],
+      ex:{ sales:'实时口播卖货', talent:'唱歌口型全程同步', edu:'板书式从容输出' } },
+    { from:'rtc', to:'screen', color:'#22d3ee', bend:-40,
+      title:'观众端播放', text:'观众端订阅 RTC 流，看到会说话的数字人。', tags:[['订阅播放','ok']],
+      ex:{ sales:'画面稳定不卡才留得住人', talent:'才艺展示完整流畅', edu:'长时间讲解低延迟' } },
+    { from:'screen', to:'audience', color:'#f59e0b', bend:-60,
+      title:'氛围闭环', text:'礼物即时动效零延迟弹出；Vidu 礼物特效 / 一键 MV 生成后覆盖播放，互动继续。', tags:[['即时动效','ok'],['motion_control_2','hot'],['MV type=16','hot']],
+      ex:{ sales:'¥66 → 氛围特效+福利口播', talent:'🚀 → 舞蹈+全屏特效', edu:'感谢支持，继续答疑' } },
+    { from:'console', to:'screen', color:'#a78bfa', bend:-80,
+      title:'唱歌 / MV 支线', text:'实时开唱走 PCM 直推；离线 MV 生成后 type=16 切换形象播放，播完恢复原形象。', tags:[['实时 PCM','ok'],['离线 MV','hot']],
+      ex:{ sales:'产品展示 MV 穿插', talent:'整首演唱 / 换装唱演', edu:'课程演示视频插播' } },
+    { from:'console', to:'audience', color:'#a78bfa', bend:70,
+      title:'主动唤醒', text:'冷开场、冷场接话、才艺锚点、PK 拉票：无人互动时主播也主动开口。', tags:[['冷启动','ok'],['沉默唤醒','ok'],['PK 拉票','ok']],
+      ex:{ sales:'限时福利倒计时播报', talent:'才艺时间到！', edu:'下一个知识点预告' } },
+  ];
+
+  /* ---------- 场景卡渲染 ---------- */
+  const cardsEl = $('cards');
+  function renderCards(mode) {
+    const m = MODES[mode];
+    cardsEl.innerHTML = `<div class="card hot"><span class="who">人设 · ${m.persona}</span><h3>${m.name}</h3><p style="color:var(--fg-dim);font-size:13px;margin:8px 0 0">${m.note}</p></div>` +
+      m.cards.map(item => `<div class="card"><ul style="margin:0"><li>${item}</li></ul></div>`).join('');
+    $('sceneNote').innerHTML = `<b>${m.name}</b> · ${m.note}`;
+  }
+
+  /* ---------- 舞台构建 ---------- */
+  const grid = $('grid');
+  for (let x = 0; x <= 1500; x += 50) { const l = document.createElementNS(NS,'line'); l.setAttribute('x1',x); l.setAttribute('x2',x); l.setAttribute('y1',0); l.setAttribute('y2',950); l.setAttribute('class','grid-line'); grid.appendChild(l); }
+  for (let y = 0; y <= 950; y += 50) { const l = document.createElementNS(NS,'line'); l.setAttribute('y1',y); l.setAttribute('y2',y); l.setAttribute('x1',0); l.setAttribute('x2',1500); l.setAttribute('class','grid-line'); grid.appendChild(l); }
+
+  const stationEls = {};
+  Object.entries(stations).forEach(([id, s]) => {
+    const g = document.createElementNS(NS,'g');
+    g.setAttribute('class','station'); g.setAttribute('transform',`translate(${s.x},${s.y})`);
+    const halo = document.createElementNS(NS,'circle'); halo.setAttribute('r',52); halo.setAttribute('class','halo'); halo.setAttribute('stroke',s.color); g.appendChild(halo);
+    const pulse = document.createElementNS(NS,'circle'); pulse.setAttribute('r',40); pulse.setAttribute('class','pulse-ring'); pulse.setAttribute('stroke',s.color); g.appendChild(pulse);
+    const core = document.createElementNS(NS,'circle'); core.setAttribute('r',36); core.setAttribute('class','core'); core.setAttribute('stroke',s.color); g.appendChild(core);
+    const icon = document.createElementNS(NS,'text'); icon.setAttribute('text-anchor','middle'); icon.setAttribute('y',9); icon.setAttribute('class','icon'); icon.textContent = s.icon; g.appendChild(icon);
+    const title = document.createElementNS(NS,'text'); title.setAttribute('text-anchor','middle'); title.setAttribute('y',72); title.setAttribute('class','title'); title.textContent = s.label; g.appendChild(title);
+    const sub = document.createElementNS(NS,'text'); sub.setAttribute('text-anchor','middle'); sub.setAttribute('y',89); sub.setAttribute('class','sub'); sub.textContent = s.sub; g.appendChild(sub);
+    $('stations').appendChild(g); stationEls[id] = g;
+  });
+
+  /* ---------- 动画引擎（与 protocol atlas 同款） ---------- */
+  let mode = 'sales';
+  let sceneIndex = 0, phase = 'travel', elapsed = 0, playing = true, speed = 1;
+  let last = performance.now(), routeEl = null, control = null;
+  const TRAVEL = 1.55, HOLD = 1.7;
+
+  const qPoint = (a,b,c,t) => ({ x:(1-t)*(1-t)*a.x + 2*(1-t)*t*c.x + t*t*b.x, y:(1-t)*(1-t)*a.y + 2*(1-t)*t*c.y + t*t*b.y });
+  const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+
+  function setActive(id) { Object.entries(stationEls).forEach(([k,el]) => el.classList.toggle('active', k === id)); }
+
+  function makeRoute() {
+    $('routes').innerHTML = '';
+    const sc = scenes[sceneIndex], a = stations[sc.from], b = stations[sc.to];
+    const dx = b.x-a.x, dy = b.y-a.y, len = Math.hypot(dx,dy) || 1;
+    control = { x:(a.x+b.x)/2 + (-dy/len)*(sc.bend||45), y:(a.y+b.y)/2 + (dx/len)*(sc.bend||45) };
+    const path = document.createElementNS(NS,'path');
+    path.setAttribute('d',`M ${a.x} ${a.y} Q ${control.x} ${control.y} ${b.x} ${b.y}`);
+    path.setAttribute('class','route'); path.setAttribute('stroke',sc.color);
+    $('routes').appendChild(path); routeEl = path;
+    const total = path.getTotalLength();
+    path.style.strokeDasharray = '4 10'; path.style.strokeDashoffset = total;
+    setActive(sc.from);
+  }
+
+  function showBubble(sc) {
+    const bubble = $('bubble');
+    const tags = sc.tags.map(([label, kind]) => `<span class="tag ${kind||''}">${label}</span>`).join('');
+    bubble.innerHTML = `<div class="step">STEP ${String(sceneIndex+1).padStart(2,'0')} / ${String(scenes.length).padStart(2,'0')} · ${MODES[mode].name}</div>
+      <h3>${sc.title}</h3><p>${sc.text} <b>${sc.ex[mode]}</b></p><div class="tags">${tags}</div>`;
+    $('bubbleFO').setAttribute('width','380'); $('bubbleFO').setAttribute('height','190');
+  }
+
+  function placeBubble(x,y) {
+    const w = 380, h = 190;
+    $('bubbleFO').setAttribute('x', clamp(x+44, 16, 1500-w-16));
+    $('bubbleFO').setAttribute('y', clamp(y-214, 14, 950-h-14));
+  }
+
+  function setCourier(x,y,t) {
+    const bob = phase === 'travel' ? Math.sin(t*22)*2.5 : 0;
+    $('courier').setAttribute('transform',`translate(${x},${y+bob})`);
+    const sc = scenes[sceneIndex];
+    $('courierBody').setAttribute('transform', stations[sc.to].x >= stations[sc.from].x ? 'scale(1,1)' : 'scale(-1,1)');
+    const packet = $('packet');
+    if (phase === 'hold') { packet.setAttribute('cx',0); packet.setAttribute('cy',-44); packet.setAttribute('r',8); }
+    else {
+      const p = qPoint(stations[sc.from], stations[sc.to], control || {x:(stations[sc.from].x+stations[sc.to].x)/2, y:(stations[sc.from].y+stations[sc.to].y)/2}, clamp(t+.06,0,1));
+      packet.setAttribute('cx', p.x-x); packet.setAttribute('cy', p.y-y-44); packet.setAttribute('r', 7+Math.sin(t*30)*1.2);
+    }
+  }
+
+  function startScene(i, immediate = false) {
+    sceneIndex = (i + scenes.length) % scenes.length;
+    $('sceneLabel').textContent = `${String(sceneIndex+1).padStart(2,'0')} / ${scenes.length} · ${scenes[sceneIndex].title}`;
+    phase = 'travel'; elapsed = 0; makeRoute(); showBubble(scenes[sceneIndex]);
+    if (immediate) {
+      const b = stations[scenes[sceneIndex].to];
+      setCourier(b.x, b.y, 1); phase = 'hold'; elapsed = 0;
+    }
+  }
+
+  function frame(now) {
+    const dt = Math.min(.05, (now-last)/1000); last = now;
+    if (playing) elapsed += dt*speed;
+    const sc = scenes[sceneIndex], a = stations[sc.from], b = stations[sc.to];
+    if (phase === 'travel') {
+      const t = clamp(elapsed/TRAVEL,0,1), e = ease(t);
+      const p = qPoint(a,b,control,e);
+      setCourier(p.x,p.y,elapsed); placeBubble(p.x,p.y);
+      if (routeEl) { const total = routeEl.getTotalLength(); routeEl.style.strokeDashoffset = String(total*(1-e)); routeEl.style.opacity = String(.25+.55*e); }
+      if (t >= 1) {
+        phase = 'hold'; elapsed = 0; setCourier(b.x,b.y,0); setActive(sc.to);
+        const ring = stationEls[sc.to].querySelector('.pulse-ring');
+        ring.style.transition = 'none'; ring.setAttribute('r',36); ring.style.opacity = '.9';
+        requestAnimationFrame(() => { ring.style.transition = 'r .8s ease, opacity .8s ease'; ring.setAttribute('r',70); ring.style.opacity = '0'; });
+      }
+    } else {
+      setCourier(b.x,b.y,0); placeBubble(b.x,b.y);
+      if (elapsed >= HOLD) {
+        if (sceneIndex === scenes.length-1) { playing = false; $('playBtn').textContent = '重播'; }
+        else startScene(sceneIndex+1);
+      }
+    }
+    $('bar').style.width = `${clamp((sceneIndex + (phase === 'travel' ? clamp(elapsed/TRAVEL,0,1) : 1))/scenes.length*100,0,100)}%`;
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 控件 ---------- */
+  $('playBtn').addEventListener('click', () => {
+    if (!playing && sceneIndex === scenes.length-1 && phase === 'hold') { startScene(0,true); playing = true; $('playBtn').textContent = '暂停'; last = performance.now(); return; }
+    playing = !playing; $('playBtn').textContent = playing ? '暂停' : '播放';
+    $('courier').classList.toggle('paused', !playing); last = performance.now();
+  });
+  $('restartBtn').addEventListener('click', () => { startScene(0,true); playing = true; $('playBtn').textContent = '暂停'; last = performance.now(); });
+  $('stepBtn').addEventListener('click', () => { startScene(sceneIndex+1,true); playing = false; $('playBtn').textContent = '播放'; last = performance.now(); });
+  $('speedSel').addEventListener('change', e => { speed = Number(e.target.value)||1; });
+  $('progress').addEventListener('click', e => {
+    const r = e.currentTarget.getBoundingClientRect();
+    startScene(Math.floor(clamp((e.clientX-r.left)/r.width,0,.999)*scenes.length), true);
+    playing = false; $('playBtn').textContent = '播放'; last = performance.now();
+  });
+
+  /* ---------- 场景切换：切换后重放当前步，旁白换案例 ---------- */
+  $('tabs').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-mode]'); if (!btn) return;
+    mode = btn.dataset.mode;
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b === btn));
+    renderCards(mode);
+    showBubble(scenes[sceneIndex]);
+    playing = true; $('playBtn').textContent = '暂停'; last = performance.now();
+  });
+
+  renderCards('sales');
+  startScene(0, false);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

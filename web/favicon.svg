@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="S2 Live Studio">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d5efc"/>
+      <stop offset=".52" stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#f0509b"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".28" cy=".18" r=".85">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#bg)"/>
+  <rect width="64" height="64" rx="15" fill="url(#glow)"/>
+  <g fill="#ffffff">
+    <circle cx="23.5" cy="22.5" r="8.3"/>
+    <rect x="20.8" y="28.6" width="5.4" height="8.2" rx="2.7"/>
+    <circle cx="23.5" cy="50.5" r="15.5"/>
+    <rect x="8" y="37" width="31" height="16" rx="3"/>
+  </g>
+  <g fill="#ffd166">
+    <rect x="52.3" y="12.6" width="3" height="24.4" rx="1.5"/>
+    <ellipse cx="48.5" cy="36.7" rx="6" ry="4.7" transform="rotate(-22 48.5 36.7)"/>
+    <path d="M55.3 12.6c5.6 1.5 8.9 5.4 8.7 11.6-2.9-4.6-5.3-6.8-8.7-7.6z"/>
+  </g>
+</svg>
