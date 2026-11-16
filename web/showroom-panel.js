@@ -4,6 +4,7 @@
  */
 const $ = id => document.getElementById(id);
 let catalog = null;
+let outfits = [];
 let selectedScene = 'living_room';
 let selectedIndustry = 'social';
 
@@ -154,7 +155,22 @@ async function apply() {
     if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
     if (data.showroom) syncFromState(data.showroom);
     const script = currentScript();
-    status(`已应用：${script?.name || ''} · ${currentAction()?.name || ''} · 场景 ${selectedScene}`);
+    const scene = catalog.scenes.find(item => item.id === selectedScene);
+    const outfit = outfits.find(item => item.name === scene?.outfit_name);
+    let sceneNote = outfit ? '' : '；场景参考已应用，出镜形象请在造型库选择';
+    if (outfit) {
+      if (window.S2Bridge?.isRunning?.()) {
+        sceneNote = `；直播中换场景请到造型库应用「${outfit.name}」`;
+      } else {
+        try {
+          await window.S2Bridge?.applyOutfit?.(outfit);
+          sceneNote = `；已切换场景形象「${outfit.name}」`;
+        } catch {
+          sceneNote = `；场景形象「${outfit.name}」需在造型库手动应用`;
+        }
+      }
+    }
+    status(`已应用：${script?.name || ''} · ${currentAction()?.name || ''} · 场景 ${scene?.name || selectedScene}${sceneNote}`);
     window.dispatchEvent(new CustomEvent('showroom-applied', { detail: data }));
   } catch (error) {
     status(`应用失败：${error.message}`, true);
@@ -180,9 +196,13 @@ async function tryActions() {
 async function load() {
   if (!$('showroomIndustries')) return;
   try {
-    const response = await fetch('/api/showroom');
+    const [response, outfitResponse] = await Promise.all([
+      fetch('/api/showroom'),
+      fetch('/api/outfits').catch(() => null),
+    ]);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     catalog = await response.json();
+    outfits = outfitResponse?.ok ? (await outfitResponse.json()).items || [] : [];
     renderOptions();
     syncFromState(catalog.state);
     status(`当前：${catalog.state.persona_id} · ${catalog.state.script_id} · ${catalog.state.action_id}`);
