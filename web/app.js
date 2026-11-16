@@ -47,6 +47,7 @@ function controls() {
   element('interruptButton').disabled = !state.stream?.ready;
   element('micButton').disabled = !state.stream?.ready || !(window.SpeechRecognition || window.webkitSpeechRecognition);
   element('recordButton').disabled = !state.running || state.recorderBusy;
+  element('recordMode').disabled = Boolean(state.recorderBusy);
   element('recordButton').textContent = state.recorderBusy ? '⏺ 停止录屏' : '⏺ 开始录屏';
   element('recordButton').setAttribute('aria-pressed', String(Boolean(state.recorderBusy)));
   element('settingsButton').disabled = state.running || state.starting;
@@ -865,8 +866,12 @@ function saveBlob(blob, name) {
 async function toggleRecording() {
   if (state.recorder?.state === 'recording') { state.recorder.stop(); return; }
   if (!navigator.mediaDevices?.getDisplayMedia) throw new Error('当前浏览器不支持录屏，请使用 Chrome / Edge');
+  const mode = element('recordMode')?.value || 'host';
+  const target = mode === 'host' ? element('stageLive') : mode === 'canvas' ? element('stage') : null;
+  const modeLabel = mode === 'host' ? '仅主播出镜 9:16' : mode === 'canvas' ? '16:9 直播画布' : '整页';
+  const modeKey = mode === 'host' ? 'host' : mode === 'canvas' ? 'canvas' : 'page';
   const capture = await navigator.mediaDevices.getDisplayMedia({
-    video: { frameRate: 30 },
+    video: { frameRate: 30, displaySurface: 'browser' },
     audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
     preferCurrentTab: true,        // 默认预选当前 S2 直播页
     selfBrowserSurface: 'include', // 允许录制本页自身
@@ -875,6 +880,21 @@ async function toggleRecording() {
   if (!capture.getAudioTracks().length) {
     capture.getTracks().forEach(track => track.stop());
     throw new Error('没有录到声音：请在分享弹窗展开后勾选「同时分享标签页音频」，再重新开始录屏');
+  }
+  /* 主播出镜范围：用 Region Capture 把标签页流裁到 #stageLive / #stage，
+     这样录到的是画面区域本身（含礼物/弹幕层），而不是浏览器整页。 */
+  if (target) {
+    const track = capture.getVideoTracks()[0];
+    try {
+      if (!window.CropTarget || typeof track?.cropTo !== 'function') {
+        throw new Error('浏览器不支持 Region Capture');
+      }
+      const cropTarget = await window.CropTarget.fromElement(target);
+      await track.cropTo(cropTarget);
+    } catch (error) {
+      capture.getTracks().forEach(item => item.stop());
+      throw new Error(`当前录制源不支持「${modeLabel}」区域裁切，请在分享弹窗选择「当前标签页」后重试（${error.message}）`);
+    }
   }
   const mime = [...MP4_MIMES, ...WEBM_MIMES].find(type => window.MediaRecorder?.isTypeSupported(type)) || '';
   const nativeMp4 = Boolean(mime && mime.startsWith('video/mp4'));
@@ -888,24 +908,24 @@ async function toggleRecording() {
     controls();
     const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     if (nativeMp4) {
-      saveBlob(blob, `s2-live-${stamp}.mp4`);
-      toast(`录屏已保存 MP4（含声音，${(blob.size / 1048576).toFixed(1)}MB）`);
+      saveBlob(blob, `s2-live-${modeKey}-${stamp}.mp4`);
+      toast(`录屏已保存 MP4（${modeLabel}，含声音，${(blob.size / 1048576).toFixed(1)}MB）`);
       return;
     }
     /* 老浏览器：webm → 上传 → 服务端 ffmpeg 转码 MP4 → 下载 */
     toast('录屏完成 · 服务端转码 MP4 中…');
     try {
-      const upload = await fetch('/api/video/upload', { method: 'POST', headers: { 'X-Filename': encodeURIComponent(`s2-live-${stamp}.webm`) }, body: blob });
+      const upload = await fetch('/api/video/upload', { method: 'POST', headers: { 'X-Filename': encodeURIComponent(`s2-live-${modeKey}-${stamp}.webm`) }, body: blob });
       if (!upload.ok) throw new Error(`上传失败 HTTP ${upload.status}`);
       const meta = await upload.json();
       const conv = await api('/api/media/transcode', { file: meta.url });
       const mp4 = await fetch(conv.url);
       if (!mp4.ok) throw new Error(`下载失败 HTTP ${mp4.status}`);
       const mp4Blob = await mp4.blob();
-      saveBlob(mp4Blob, `s2-live-${stamp}.mp4`);
-      toast(`录屏已转码保存 MP4（含声音，${(mp4Blob.size / 1048576).toFixed(1)}MB）`);
+      saveBlob(mp4Blob, `s2-live-${modeKey}-${stamp}.mp4`);
+      toast(`录屏已转码保存 MP4（${modeLabel}，含声音，${(mp4Blob.size / 1048576).toFixed(1)}MB）`);
     } catch (error) {
-      saveBlob(blob, `s2-live-${stamp}.webm`);
+      saveBlob(blob, `s2-live-${modeKey}-${stamp}.webm`);
       report(new Error(`MP4 转码未成功，已保存 webm 原片：${error.message}`));
     }
   };
@@ -913,7 +933,7 @@ async function toggleRecording() {
   state.recorder = recorder;
   controls();
   recorder.start(1000);
-  toast('录屏中 · 默认录制当前直播页（含主播声音；若弹窗有「分享标签页音频」请保持勾选）');
+  toast(`录屏中 · ${modeLabel}（含主播声音；分享弹窗请保持勾选「同时分享标签页音频」）`);
 }
 element('recordButton').onclick = () => toggleRecording().catch(error => { state.recorder = null; controls(); report(error); });
 element('chatForm').onsubmit = event => {
