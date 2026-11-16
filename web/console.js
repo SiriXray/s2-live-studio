@@ -931,6 +931,18 @@ if (element('latinMode')) {
   syncLatinMode();
 }
 
+window.addEventListener('showroom-applied', async event => {
+  try {
+    manifest = await api('/api/interaction');
+    renderManifest();
+    renderVoiceCard();
+    const next = event.detail?.showroom;
+    feed(`样板间已应用：${next?.persona_id || ''} · ${next?.script_id || ''} · ${next?.action_id || ''}`, 'ok');
+  } catch (error) {
+    feed(`样板间应用后刷新失败：${error.message}`, 'err');
+  }
+});
+
 (async () => {
   try { manifest = await api('/api/interaction'); renderManifest(); feed('中控台已就绪（策略引擎 V2）', 'ok'); }
   catch (error) { feed(`中控台初始化失败：${error.message}`, 'err'); }

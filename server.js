@@ -16,6 +16,7 @@ const { getManifest, planTurn } = require('./lib/monet');
 const { prepareMonet, validateMonetProfile } = require('./lib/monet-dialogue');
 const { createMonetLibrary, ACTION_STYLE } = require('./lib/monet-library');
 const { createInteraction } = require('./lib/interaction');
+const showroom = require('./lib/showroom');
 const { createNpcGame } = require('./lib/npcgame');
 const { getPersona, styleInstruction } = require('./lib/personas');
 const { voiceForPersona, patchForVoice, getVoice, listVoices } = require('./lib/voices');
@@ -137,6 +138,8 @@ function createStudio(options = {}) {
   const dataDir = options.dataDir || path.join(__dirname, 'data');
   const monetLibrary = createMonetLibrary({ file: path.join(dataDir, 'monet-library.json'), transport });
   const interaction = createInteraction({ store, transport, dataDir });
+  const initialShowroom = showroom.loadState(dataDir);
+  interaction.setActionTemplate(showroom.actionGroups(initialShowroom.action_id));
   /* 互动影游 NPC 对话引擎（夏栀/小满好感度线）：独立于直播互动调度，同一 LLM/TTS 配置 */
   const npcGame = createNpcGame({ store, transport, dataDir });
   const effects = createEffects({ dataDir, transport, dryRun: true, allowLocalFiles: true });
@@ -387,6 +390,31 @@ function createStudio(options = {}) {
       const manifest = interaction.updateConfig(patch);
       if (switchingPersona) manifest.bound_outfit = boundOutfit(patch.persona_id);
       return json(response, 200, manifest);
+    }
+    if (request.method === 'GET' && pathname === '/api/showroom') {
+      return json(response, 200, {
+        ...showroom.catalog(),
+        state: showroom.loadState(dataDir),
+        personas: interaction.snapshot().personas,
+        config: interaction.snapshot().config,
+      });
+    }
+    if (request.method === 'POST' && pathname === '/api/showroom/apply') {
+      const input = await readJson(request);
+      const next = showroom.applyState(dataDir, input);
+      const person = getPersona(next.persona_id);
+      const gender = ['female', 'male'].includes(next.voice_gender) ? next.voice_gender : person?.gender;
+      const voice = voiceForPersona(person, gender);
+      if (voice && typeof store.save === 'function') store.save(patchForVoice(voice));
+      const manifest = interaction.updateConfig({
+        persona_id: next.persona_id,
+        voice_gender: next.voice_gender,
+        opening: next.opening,
+        triggers: next.triggers,
+      });
+      interaction.setActionTemplate(showroom.actionGroups(next.action_id));
+      manifest.bound_outfit = boundOutfit(next.persona_id);
+      return json(response, 200, { ...manifest, showroom: next });
     }
     if (request.method === 'POST' && pathname === '/api/interaction/event') {
       const input = await readJson(request, 128 * 1024);

@@ -16,7 +16,7 @@
   <button id="canvasExit" class="canvas-exit" hidden>退出 16:9 画布</button>
   <header class="topbar">
     <a class="brand" href="/" aria-label="S2 Live Studio 首页"><span class="brandmark">S2</span></a>
-    <nav aria-label="工作台导航"><a href="#studio" class="active">直播工作台</a><a href="#wardrobe">形象与换装</a><a href="/atlas.html" target="_blank" rel="noopener">业务链路</a><a href="/voices/" target="_blank" rel="noopener">音色试听</a><a href="/showroom/" target="_blank" rel="noopener">样板间</a><button id="consoleButton" class="quiet">中控台 <span aria-hidden="true">≡</span></button><button id="canvasButton" class="quiet">16:9 画布</button><button id="settingsButton" class="quiet">连接设置 <span aria-hidden="true">↗</span></button></nav>
+    <nav aria-label="工作台导航"><a href="#studio" class="active">直播工作台</a><a href="#wardrobe">形象与换装</a><a href="/atlas.html" target="_blank" rel="noopener">业务链路</a><a href="/voices/" target="_blank" rel="noopener">音色试听</a><a href="/showroom/" target="_blank" rel="noopener">样板间</a><button id="consoleButton" class="quiet">中控台 <span aria-hidden="true">≡</span></button><button id="showroomNav" class="quiet">行业样板间</button><button id="canvasButton" class="quiet">16:9 画布</button><button id="settingsButton" class="quiet">连接设置 <span aria-hidden="true">↗</span></button></nav>
     <span class="local-label"><i></i> 云端工作空间</span>
   </header>
   <main id="studio">
@@ -94,6 +94,25 @@
   <aside id="consoleDrawer" class="console-drawer" aria-label="互动组合策略中控台" hidden>
     <div class="drawer-header"><div><p class="eyebrow">INTERACTION CONSOLE</p><h2>中控台</h2></div><button id="closeConsole" class="square" aria-label="关闭中控台">×</button></div>
     <div id="consoleBody" class="drawer-body">
+      <section class="drawer-section" aria-labelledby="csShowroom"><h3 id="csShowroom">样板间 · 行业最佳实践</h3>
+        <p class="help">先选行业，再自由组合场景 / 人物 / 话术 / 动作；应用后写入控制台。</p>
+        <div id="showroomIndustries" class="showroom-industries"></div>
+        <div id="showroomScenes" class="showroom-scenes"></div>
+        <div class="showroom-grid">
+          <label for="showroomPersona">人物<select id="showroomPersona"></select></label>
+          <label for="showroomScript">话术模板<select id="showroomScript"></select></label>
+          <label for="showroomAction">动作模板<select id="showroomAction"></select></label>
+        </div>
+        <label for="showroomOpening">开场白（可改）</label>
+        <textarea id="showroomOpening" rows="2" maxlength="500"></textarea>
+        <div class="sim-row showroom-params">
+          <label>沉默 s<input id="showroomSilence" type="number" min="5" max="300" step="1"></label>
+          <label>动作 s<input id="showroomIdle" type="number" min="2" max="60" step="1"></label>
+          <label>概率<input id="showroomSmalltalk" type="number" min="0" max="1" step="0.05"></label>
+        </div>
+        <div class="sim-row"><button id="showroomApply" class="primary">应用到控制台</button><button id="showroomTry" class="secondary">试动作</button></div>
+        <p class="help" id="showroomStatus" hidden></p>
+      </section>
       <section class="drawer-section" aria-labelledby="csPersona"><h3 id="csPersona">人设 · 音色 · 开场白</h3>
         <div id="personaList" class="persona-list"></div>
         <h4 class="sub">音色 <span class="tag">女 / 男双轨</span></h4>
@@ -257,5 +276,6 @@
   <script type="module" src="/app.js"></script>
   <script type="module" src="/console.js"></script>
   <script type="module" src="/sales-script.js"></script>
+  <script type="module" src="/showroom-panel.js"></script>
 </body>
 </html>
