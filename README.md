@@ -206,6 +206,7 @@ Nginx 需要把 `/ws/live` 的 WebSocket 升级头转发给 Node；`/voices/` �
 
 ## 动作与自然度
 
+- [S2 组件版参数、选型与社交直播自然度](docs/s2-component-and-naturalness.md)
 - [自然度与动作机制说明](NATURALNESS.md)
 - [教育 / 带货直播自然度 Playbook](docs/live-playbook.md)
 - 60 条动作库：表情、手势、开场/收尾、坐姿、舞台、拉丁舞
