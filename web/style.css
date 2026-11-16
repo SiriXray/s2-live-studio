@@ -152,3 +152,14 @@ body.canvas-mode .stage-column{width:100%;height:100%;display:flex;align-items:c
 body.canvas-mode .stage{width:min(100vw,177.7778vh);height:min(56.25vw,100vh);aspect-ratio:16/9;border:0;border-radius:0;margin:0}
 body.canvas-mode .stage-live{border-left:0;border-right:0}
 body.canvas-mode .canvas-exit{display:block}
+
+/* 带货分段脚本 */
+.sales-segments{display:grid;gap:6px;margin:10px 0}
+.sales-segment{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--field);transition:.2s}
+.sales-segment.active{border-color:var(--accent);background:rgba(124,108,255,.12)}
+.sales-segment header{display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.sales-segment header span{color:var(--muted);font-size:10px}
+.sales-segment small{display:block;color:var(--muted);font-size:10px;line-height:1.4;margin-top:4px}
+.sales-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.sales-actions span{font-size:9px;color:#b9c6ff;border:1px solid rgba(126,146,255,.22);background:rgba(91,140,255,.08);border-radius:4px;padding:2px 5px}
+#salesProgress{width:100%;height:8px;margin:8px 0;accent-color:var(--accent)}

@@ -210,6 +210,20 @@
         </div>
         <p class="help" id="latinNote" hidden></p>
       </section>
+      <section class="drawer-section" aria-labelledby="csSales"><h3 id="csSales">带货脚本 · 分段 <span class="tag">30s + 3min + 1min</span></h3>
+        <p class="help">真实机制必填；脚本会逐句 TTS 并绑定动作组，不编造价格、库存、时效。</p>
+        <div class="sim-row"><input id="salesProduct" maxlength="40" placeholder="商品名（真实）"><input id="salesPrice" maxlength="20" placeholder="直播价（真实）"></div>
+        <div class="sim-row"><input id="salesOriginal" maxlength="20" placeholder="日常价（选填）"><input id="salesStock" maxlength="20" placeholder="真实库存"><input id="salesEnd" maxlength="20" placeholder="机制结束时间"></div>
+        <div id="salesSegments" class="sales-segments"></div>
+        <div class="sim-row">
+          <button id="salesStart" class="primary">开始整段</button>
+          <button id="salesPause" class="secondary" disabled>暂停</button>
+          <button id="salesNext" class="secondary" disabled>下一段</button>
+          <button id="salesStop" class="secondary" disabled>结束</button>
+        </div>
+        <progress id="salesProgress" value="0" max="100" hidden></progress>
+        <p class="help" id="salesStatus" hidden></p>
+      </section>
       <section class="drawer-section" aria-labelledby="csReady"><h3 id="csReady">已生成视频 <span class="tag">上传 / 链接直播</span></h3>
         <div class="sim-row"><input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" hidden><button id="videoUpload" class="secondary">上传视频（MV成片 / 跳舞）</button><button id="videoUploadPlay" class="primary" hidden>播放</button></div>
         <div class="sim-row"><input id="overlayVideoUrl" placeholder="公开可访问的视频链接（特效/跳舞成片，直接覆盖播放）"><button id="overlayPlay" class="secondary">播放</button></div>
@@ -242,5 +256,6 @@
   </aside>
   <script type="module" src="/app.js"></script>
   <script type="module" src="/console.js"></script>
+  <script type="module" src="/sales-script.js"></script>
 </body>
 </html>

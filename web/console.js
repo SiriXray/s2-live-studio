@@ -645,7 +645,7 @@ function toggleMockDanmaku() {
     return;
   }
   mockTimer = setInterval(() => {
-    if (!bridge?.isRunning?.() || singing) return;
+    if (!bridge?.isRunning?.() || singing || window.SALES_SCRIPT_RUNNING) return;
     const text = MOCK_COMMENTS[Math.floor(Math.random() * MOCK_COMMENTS.length)];
     injectEvent({ type: 'comment', text });
   }, 6000 + Math.floor(Math.random() * 4000));
@@ -795,7 +795,7 @@ if (localStorage.getItem('s2_avatar_id')) element('mvAvatarId').placeholder = `�
 
 /* 时间+状态触发轮询（冷启动/沉默/才艺锚点/PK拉票/静默小动作）；演唱中暂停主动互动 */
 setInterval(async () => {
-  if (!bridge?.isRunning?.() || singing) return;
+  if (!bridge?.isRunning?.() || singing || window.SALES_SCRIPT_RUNNING) return;
   try {
     const result = await api('/api/interaction/tick', {});
     if (result.plan) { feed(`唤醒触发 · ${result.plan.trigger}`); await executePlan(result.plan); }
