@@ -205,6 +205,7 @@ Nginx 需要把 `/ws/live` 的 WebSocket 升级头转发给 Node；`/voices/` �
 ## 动作与自然度
 
 - [自然度与动作机制说明](NATURALNESS.md)
+- [教育 / 带货直播自然度 Playbook](docs/live-playbook.md)
 - 60 条动作库：表情、手势、开场/收尾、坐姿、舞台、拉丁舞
 - type 9 / type 101 / type 99 / type 100 / type 102 的用法与边界
 - 礼物档位、动作冷却、自然停顿、MiniMax/Soul 语气词策略
