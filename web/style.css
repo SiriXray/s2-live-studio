@@ -193,3 +193,26 @@ body.canvas-mode .canvas-exit{display:block}
 .s2-fields input{width:100%;padding:6px;font-size:11px}
 #s2Videos{min-height:58px;font-size:11px}
 #s2PreviewOut{max-height:180px;overflow:auto;font-size:10px;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px;white-space:pre-wrap}
+
+/* 中控台折叠抽屉：标题 + 一句摘要，展开看完整内容 */
+.console-filter{position:sticky;top:0;z-index:5;background:var(--panel);padding:8px 0 10px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.console-tabs{display:flex;flex-wrap:wrap;gap:4px}
+.console-tab{font-size:10px;padding:5px 8px;border-radius:999px;border:1px solid var(--line);background:var(--field);color:var(--muted);cursor:pointer}
+.console-tab.active{border-color:var(--accent);color:#fff;background:rgba(124,108,255,.18)}
+.console-tools{display:flex;gap:6px;margin-top:6px}
+.console-tools button{font-size:9px;color:var(--muted);border:0;background:transparent;padding:2px 0;cursor:pointer}
+.console-tools button:hover{color:var(--text)}
+.console-accordion{border:1px solid var(--line);border-radius:9px;margin:0 0 7px;background:rgba(255,255,255,.018);overflow:hidden}
+.console-accordion summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 11px;min-height:44px}
+.console-accordion summary::-webkit-details-marker{display:none}
+.console-accordion summary:hover{background:rgba(255,255,255,.03)}
+.console-accordion[open] summary{border-bottom:1px solid var(--line);background:rgba(124,108,255,.08)}
+.console-accordion .ca-heading{font-size:12px;font-weight:600;margin:0;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.console-accordion .ca-desc{flex:1;min-width:0;font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.console-accordion .ca-arrow{flex:0 0 auto;color:var(--muted);font-size:16px;line-height:1;transform:rotate(0deg);transition:.15s}
+.console-accordion[open] .ca-arrow{transform:rotate(90deg);color:var(--accent)}
+.console-accordion .ca-body{padding:10px 11px 12px}
+.console-accordion[hidden]{display:none}
+.console-accordion .ca-body > .help:first-child{margin-top:0}
+
+.check-inline input[type=checkbox]{width:14px;height:14px;min-height:14px;padding:0;flex:0 0 14px;accent-color:var(--accent)}
