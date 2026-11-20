@@ -58,9 +58,7 @@ function renderScenes() {
     button.onclick = () => {
       selectedScene = scene.id;
       renderScenes();
-      const persona = scene.id === 'scholar' ? 'elegant_edu' : scene.id === 'market' ? 'hype_sales' : scene.id === 'palace' ? 'npc_gui_fei' : scene.id === 'kitchen' ? 'lively_rural' : scene.id === 'stage' ? 'velvety_night' : 'tender_companion';
-      if ([...$('showroomPersona').options].some(option => option.value === persona)) $('showroomPersona').value = persona;
-      status(`场景：${scene.name} · ${scene.prompt}`);
+      status(`场景：${scene.name} · ${scene.prompt}（人物与形象独立，可在上方单独选人物）`);
     };
     host.appendChild(button);
   }

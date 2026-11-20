@@ -23,6 +23,7 @@ export const SIG = {
   TEXT_ACTION: 101,
   TEXT_DIALOG: 102,
   SWITCH_AVATAR: 16,
+  COMMAND_RESULT: 104,
   ERROR: 103,
 };
 
@@ -45,6 +46,7 @@ export class ViduStream {
     this.onLog = opts.onLog || (() => {});
     this.onSignal = opts.onSignal || (() => {});
     this.onSwitchAvatarError = opts.onSwitchAvatarError || (() => {});
+    this.onCommandResult = opts.onCommandResult || (() => {});
     this.onHangup = opts.onHangup || (() => {});
     this.onReady = opts.onReady || (() => {});
     this.keepAliveEnabled = opts.keepAlive !== false;
@@ -136,10 +138,18 @@ export class ViduStream {
           return;
         }
 
+        if (sig.type === SIG.COMMAND_RESULT) {
+          const result = (sig.payload && sig.payload.msg) || {};
+          const label = result.status ? `status=${result.status}` : (result.success === false ? 'failed' : 'finished');
+          this.onLog(`指令结果(104): source=${result.source || '?'} ${label}`, result.success === false ? 'err' : 'ok');
+          this.onCommandResult(result);
+          return;
+        }
+
         if (sig.type === SIG.ERROR) {
           const error = (sig.payload && sig.payload.error) || {};
           this.onLog(`服务端错误信令(103): source=${error.source || '?'} code=${error.error_code || '?'} ${error.error_msg || ''}`, 'err');
-          // switch_avatar 无成功回执，只有失败才下发 103；这里交给上层展示
+          // 旧文档里 switch_avatar 只有失败回执；新协议以 104 的 finished 帧为准。
           if (error.source === 'switch_avatar') this.onSwitchAvatarError(error);
           return;
         }
@@ -226,14 +236,17 @@ export class ViduStream {
    * type=16 switch_avatar：播放转场视频后切换形象。
    * - videos: 1~10 个 http(s) 视频地址，按顺序完整播放一轮后新形象生效（可拿来当离线 MV 播放器）
    * - avatarId: 资产库形象 ID（字符串，非图片地址）；切回原形象时再次调用
-   * 注意：成功不回执，失败才发 type=103（error.source=switch_avatar），勿用「没回执就重发」策略。
+   * 注意：新协议会按 preparing → running → finished 下发 type=104，以 finished 判断成败；
+   * 失败另发 type=103（error.source=switch_avatar）。勿用「没回执就重发」策略。
    */
-  switchAvatar(videos, avatarId) {
+  switchAvatar(videos, avatarId, options = {}) {
     if (!this.ready) return false;
     if (!Array.isArray(videos) || videos.length < 1 || videos.length > 10) return false;
     if (videos.some(url => !/^https:\/\//.test(String(url)))) return false;
+    if (!avatarId) return false;
     const payload = { switch_avatar: { switch_videos: videos.slice(0, 10).map(String) } };
-    if (avatarId) payload.switch_avatar.avatar_id = String(avatarId);
+    payload.switch_avatar.avatar_id = String(avatarId);
+    if (options.switchOnReady) payload.switch_avatar.switch_on_ready = true;
     return this._sendSignal(SIG.SWITCH_AVATAR, payload);
   }
 

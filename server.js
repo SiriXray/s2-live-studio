@@ -17,6 +17,7 @@ const { prepareMonet, validateMonetProfile } = require('./lib/monet-dialogue');
 const { createMonetLibrary, ACTION_STYLE } = require('./lib/monet-library');
 const { createInteraction } = require('./lib/interaction');
 const showroom = require('./lib/showroom');
+const s2Params = require('./lib/s2-params');
 const { createNpcGame } = require('./lib/npcgame');
 const { getPersona, styleInstruction } = require('./lib/personas');
 const { voiceForPersona, patchForVoice, getVoice, listVoices } = require('./lib/voices');
@@ -226,6 +227,16 @@ function createStudio(options = {}) {
     const url = new URL(request.url, 'http://localhost');
     const pathname = url.pathname;
     if (request.method === 'GET' && pathname === '/api/health') return json(response, 200, { service: 's2-live-studio', ok: true, appearance: appearance.capabilities(), readiness: store.view().readiness });
+    if (request.method === 'GET' && pathname === '/api/s2/params') return json(response, 200, { s2: s2Params.load(dataDir), meta: s2Params.catalog() });
+    if (request.method === 'POST' && pathname === '/api/s2/params') {
+      const input = await readJson(request, 256 * 1024);
+      const s2 = s2Params.save(dataDir, input.s2 || input);
+      return json(response, 200, { s2, meta: s2Params.catalog(), note: '自然度参数已保存；分辨率/动作库在下一次开播生效' });
+    }
+    if (request.method === 'POST' && pathname === '/api/s2/preview') {
+      const input = await readJson(request, 256 * 1024);
+      return json(response, 200, { payload: s2Params.preview(dataDir, input.s2 || input) });
+    }
     if (request.method === 'GET' && pathname === '/api/config') return json(response, 200, { ...store.view(), appearance: appearance.capabilities() });
     if (request.method === 'GET' && pathname === '/api/monet') return json(response, 200, { ...getManifest(), ...(monetProfile ? { persona: monetProfile.persona } : {}), library: monetLibrary.status(store.load()) });
     if (request.method === 'GET' && pathname === '/api/monet/library') return json(response, 200, monetLibrary.status(store.load()));
@@ -254,7 +265,7 @@ function createStudio(options = {}) {
     const imageMatch = pathname.match(/^\/api\/outfits\/([a-f\d]{64})\/image$/);
     if (request.method === 'GET' && imageMatch) {
       const decoded = imageData(outfit(imageMatch[1]).image_uri);
-      response.writeHead(200, { 'Content-Type': decoded.type, 'Content-Length': decoded.bytes.length, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+      response.writeHead(200, { 'Content-Type': decoded.type, 'Content-Length': decoded.bytes.length, 'Cache-Control': 'private, max-age=86400', 'X-Content-Type-Options': 'nosniff' });
       return response.end(decoded.bytes);
     }
     const removeMatch = pathname.match(/^\/api\/outfits\/([a-f\d]{64})$/);
@@ -294,6 +305,10 @@ function createStudio(options = {}) {
         // 动作匹配：开播即绑平台默认动作库（library_id "0"），含静默自然小动作；人设文本注入帮助动作更贴合风格
         const activePersona = getPersona(interaction.snapshot().config.persona_id);
         const personaText = activePersona ? `${styleInstruction(activePersona)}`.slice(0, 20000) : '';
+        const s2 = s2Params.load(dataDir);
+        const actionPrompt = body.experience === 'monet'
+          ? (monetProfile?.action_style || ACTION_STYLE)
+          : s2.action_prompt;
         creating = true;
         try {
           const suffix = crypto.randomBytes(6).toString('hex');
@@ -302,12 +317,13 @@ function createStudio(options = {}) {
           const viewer = signToken(config.rtc.provider, config.rtc, channelId, `viewer-${suffix}`);
           const created = await vidu(config, 'POST', '/live/s_avatar/component', {
             model: 'vidu-s2',
+            resolution: ['720p', '1080p', '2k'].includes(body.resolution) ? body.resolution : s2.resolution,
             image_uri: image,
             action: body.experience === 'monet'
               ? { enabled: true, library_id: library.library_id }
-              : { enabled: true, library_id: '0' },
+              : s2.action,
             ...(personaText ? { persona: personaText } : {}),
-            ...(body.experience === 'monet' ? { avatar: { action_prompt: monetProfile?.action_style || ACTION_STYLE } } : {}),
+            ...(actionPrompt ? { action_prompt: actionPrompt } : {}),
             customer_rtc: { provider: config.rtc.provider, app_id: push.app_id, channel_id: channelId, user_id: push.user_id, token: push.token },
           });
         if (!created.live?.id || (typeof created.live.id === 'number' && !Number.isSafeInteger(created.live.id)) || !/^\d+$/.test(String(created.live.id))) throw new Error('Vidu创建结果缺少无损live.id，请在控制台检查是否已创建，勿重复点击开播');
@@ -340,6 +356,24 @@ function createStudio(options = {}) {
         if (['TimeoutError', 'TypeError'].includes(error.name)) throw Object.assign(new Error('Editing创建结果未确认，请到Vidu控制台检查，勿直接重复创建', { cause: error }), { status: 502 });
         throw error;
       } finally { parent.editingCreating = false; }
+    }
+    /* 资产形象注册：type=16 switch_avatar 只认资产库 avatar_id，不认临时 image_uri。
+       用当前出镜形象图注册一次，后续转场/唱跳只传 id。 */
+    if (request.method === 'POST' && pathname === '/api/avatars') {
+      const body = await readJson(request, 24 * 1024 * 1024);
+      if (typeof body.image_uri !== 'string' || !body.image_uri) throw new Error('缺少形象图 image_uri');
+      const config = store.load();
+      const image = imageUri(body.image_uri);
+      const name = typeof body.name === 'string' && body.name.trim() ? body.name.trim().slice(0, 60) : '';
+      const created = await vidu(config, 'POST', '/live/v1/avatars', { image_uri: image, ...(name ? { name } : {}) });
+      const id = created.id || created.avatar?.id || created.data?.id;
+      if (id === undefined || id === null || !String(id).trim()) {
+        throw Object.assign(new Error('Vidu 资产注册未返回 avatar_id，无法执行 type=16 转场'), { status: 502 });
+      }
+      return json(response, 201, {
+        avatar_id: String(id),
+        image_uri: created.image_uri || created.avatar?.image_uri || '',
+      });
     }
     const referenceMatch = pathname.match(/^\/api\/outfits\/([a-f\d]{64})\/reference$/);
     if (referenceMatch && request.method === 'GET') return json(response, 200, { image_uri: outfit(referenceMatch[1]).image_uri });

@@ -60,22 +60,20 @@
 
 ### 2.2 组件版没有平台 LLM / VAD / TTS
 
-官方组件版创建参数只包含 **形象 + RTC**。以下能力需要你自己实现：
+官方组件版创建参数支持 **形象 + RTC + resolution + persona + action + action_prompt**，但以下能力仍需你自己实现：
 
 - ASR / VAD / endpointing
 - LLM 台词
 - TTS（MiniMax / Soul / 其他）
 - 记忆 / 知识库
-- 动作选择与节拍
 - 打断与 turn-taking
 
 这意味着：
 
-- `persona` 不是组件版的官方字段；**人设要写进你自己的 LLM system prompt**。
-- `action.library_id` 也不是组件版官方创建字段；组件版动作主要靠 **type 9 `input_transcription`** 的文本匹配。
+- `persona` 是组件版的表演/动作人设字段，**不是平台 LLM**；台词仍要写进你自己的 system prompt。
+- `action.enabled` / `action.library_id` 是官方字段；动作仍靠 **type 9 `input_transcription`** 的文本匹配。
+- `action_prompt` 只描述动作/节奏/气质，不要写“长什么样/穿什么”，形象与 persona 独立。
 - 不要指望组件版帮你做“服务端 VAD/LLM/记忆”；这些是实时版的能力。
-
-> 本项目在组件版创建请求里附带 `action` / `persona` 属于兼容尝试；不要把“平台一定按该 library_id 匹配”当成强承诺。实际动作验收以画面为准。
 
 ### 2.3 形象图建议
 

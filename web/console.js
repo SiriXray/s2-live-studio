@@ -14,6 +14,9 @@ let executing = null; // { abort, priority, planId }
 let voices = [];      // 音色档案（/api/config.voices）
 let singing = null;   // { abort, session } 实时唱歌会话
 let mvTask = null;    // 最近一次 MV 任务 { task_id, url, state }
+let s2 = null;        // S2 组件版自然度参数（GET /api/s2/params）
+let s2Meta = null;    // 预设 / 参数说明 / 取值范围
+const sleep = ms => new Promise(resolve => setTimeout(resolve, Math.max(0, Number(ms) || 0)));
 
 function toast(message, error = false) { bridge?.toast ? bridge.toast(message, error) : alert(message); }
 function log(message) { bridge?.log ? bridge.log(message) : console.log(message); }
@@ -31,7 +34,7 @@ function openDrawer(open) {
   // 抽屉开启时，麦克风语音与聊天框都改走互动引擎（意图分类+双轨输出）
   window.__consoleActive = open;
   window.__consoleDispatch = open ? dispatchPlan : null;
-  if (open) { renderManifest(); refreshFeed(); renderVoiceCard(); loadMusic(); loadGames(); }
+  if (open) { renderManifest(); refreshFeed(); renderVoiceCard(); loadS2(); setTimeout(loadGames, 0); }
 }
 
 async function dispatchPlan(plan) {
@@ -46,7 +49,7 @@ function renderManifest() {
   for (const persona of data.personas) {
     const card = document.createElement('button');
     card.className = `persona-card${data.config.persona_id === persona.id ? ' selected' : ''}`;
-    card.innerHTML = `<b>${persona.name}</b><small>形象：${persona.look || '—'}</small><small>女声：${persona.voice_female_name || '—'} · 男声：${persona.voice_male_name || '—'}</small>`;
+    card.innerHTML = `<b>${persona.name}</b><small>女声：${persona.voice_female_name || '—'} · 男声：${persona.voice_male_name || '—'}</small><small>形象独立于「形象与换装」，不随人设切换</small>`;
     card.onclick = async () => {
       try {
         manifest = await api('/api/interaction/config', { persona_id: persona.id });
@@ -54,7 +57,6 @@ function renderManifest() {
         renderVoiceCard();
         feed(`人设已切换：${persona.name}（女声：${persona.voice_female_name || '—'} / 男声：${persona.voice_male_name || '—'}）`);
         toast(`已切换：${persona.name}`);
-        if (manifest.bound_outfit) await bridge.applyOutfit?.(manifest.bound_outfit);
       }
       catch (error) { toast(error.message, true); }
     };
@@ -417,6 +419,7 @@ async function startSinging() {
   if (!name) return;
   if (!bridge.liveActive()) { toast('请先开播并连接直播，再开始演唱', true); return; }
   if (singing) { toast('正在演唱中', true); return; }
+  await beforePerformance('唱歌').catch(() => false);
   const abort = new AbortController();
   singing = { abort, name };
   element('singStart').disabled = true;
@@ -444,7 +447,11 @@ async function startSinging() {
       overshoot += (performance.now() - sliceStart) - (end - offset) / 48;
       progress.value = Math.round(end / pcm.length * 100);
     }
-    if (singing?.abort === abort) feed('唱歌 · 演唱完成，恢复互动调度', 'ok');
+    if (singing?.abort === abort) {
+      const pad = Number(s2?.naturalness?.singing?.tail_pad_ms) || 0;
+      if (pad > 0) { feed(`唱歌 · 收尾驻留 ${pad}ms，避免唱完抢拍`); await sleep(pad); }
+      feed('唱歌 · 演唱完成，恢复互动调度', 'ok');
+    }
   } catch (error) {
     if (error.name !== 'AbortError') { feed(`唱歌失败：${error.message}`, 'err'); toast(error.message, true); }
   } finally {
@@ -560,30 +567,178 @@ async function pollMv(taskId, attempt = 0) {
   } catch (error) { mvNote(`轮询失败：${error.message}`); }
 }
 
+/* ---------- 自然度参数（S2 组件版）：表单 ⇄ /api/s2/params ---------- */
+
+function fillS2Form(value) {
+  if (!value) return;
+  const n = value.naturalness || {};
+  element('s2Resolution').value = value.resolution || '720p';
+  element('s2Library').value = value.action?.library_id ?? '0';
+  element('s2ActionEnabled').checked = Boolean(value.action?.enabled);
+  element('s2Prompt').value = value.action_prompt || '';
+  element('s2Idle').value = n.idle?.interval_s ?? 12;
+  element('s2Rest').value = n.idle?.rest_s ?? 4;
+  element('s2DanceSeg').value = n.dance?.segment_seconds ?? 2;
+  element('s2Hold').value = n.transition?.hold_ms ?? 400;
+  element('s2Tail').value = n.singing?.tail_pad_ms ?? 600;
+  element('s2Ducking').value = n.singing?.ducking ?? 0.35;
+  element('s2Baseline').checked = n.transition?.baseline_reset !== false;
+  element('s2SuppressIdle').checked = n.singing?.suppress_idle !== false;
+  element('s2Bridge').checked = n.dance?.bridge_action !== false;
+  element('s2Videos').value = (n.transition?.videos || []).join('\n');
+}
+
+function s2FromForm() {
+  const base = s2 || {};
+  return {
+    model: base.model || 'vidu-s2',
+    resolution: element('s2Resolution').value,
+    action: { enabled: element('s2ActionEnabled').checked, library_id: element('s2Library').value.trim() || '0' },
+    action_prompt: element('s2Prompt').value.trim(),
+    naturalness: {
+      transition: {
+        baseline_reset: element('s2Baseline').checked,
+        videos: element('s2Videos').value.split(/\s+/).map(item => item.trim()).filter(Boolean),
+        hold_ms: Number(element('s2Hold').value),
+        auto_from_recent: base.naturalness?.transition?.auto_from_recent !== false,
+      },
+      singing: {
+        suppress_idle: element('s2SuppressIdle').checked,
+        tail_pad_ms: Number(element('s2Tail').value),
+        ducking: Number(element('s2Ducking').value),
+      },
+      dance: {
+        segment_seconds: Number(element('s2DanceSeg').value),
+        bridge_action: element('s2Bridge').checked,
+        bridge_text: base.naturalness?.dance?.bridge_text || '面向镜头微笑',
+      },
+      idle: { interval_s: Number(element('s2Idle').value), rest_s: Number(element('s2Rest').value) },
+    },
+  };
+}
+
+function renderS2Extras() {
+  const row = element('s2Presets');
+  row.replaceChildren();
+  for (const preset of s2Meta?.presets || []) {
+    const button = document.createElement('button');
+    button.className = 'chip';
+    button.textContent = preset.label;
+    button.title = preset.hint;
+    button.onclick = () => { fillS2Form(preset.value); toast(`已套用预设：${preset.label}（记得点保存）`); };
+    row.appendChild(button);
+  }
+  const guide = element('s2Guide');
+  guide.replaceChildren();
+  for (const item of s2Meta?.guidance || []) {
+    const div = document.createElement('div');
+    div.className = 'intent-row';
+    div.innerHTML = `<div><b>${item.label}</b><small>${item.note}</small></div>`;
+    guide.appendChild(div);
+  }
+  if (s2Meta?.note) element('s2Note').textContent = s2Meta.note;
+}
+
+async function loadS2() {
+  try {
+    const data = await api('/api/s2/params');
+    s2 = data.s2; s2Meta = data.meta;
+    fillS2Form(s2);
+    renderS2Extras();
+  } catch (error) { feed(`自然度参数加载失败：${error.message}`, 'err'); }
+}
+
+async function saveS2() {
+  try {
+    const data = await api('/api/s2/params', { s2: s2FromForm() });
+    s2 = data.s2; s2Meta = data.meta;
+    fillS2Form(s2); renderS2Extras();
+    if (s2.naturalness?.idle) element('cfgIdle').value = s2.naturalness.idle.interval_s;
+    toast(data.note || '参数已保存');
+    feed(`自然度参数已保存 · ${s2.resolution} · 小动作 ${s2.naturalness.idle.interval_s}s · 转场驻留 ${s2.naturalness.transition.hold_ms}ms`, 'ok');
+  } catch (error) { toast(error.message, true); }
+}
+
+async function previewS2() {
+  try {
+    const data = await api('/api/s2/preview', { s2: s2FromForm() });
+    const out = element('s2PreviewOut');
+    out.hidden = false;
+    out.textContent = JSON.stringify(data.payload, null, 2);
+  } catch (error) { toast(error.message, true); }
+}
+
+/* 转场：type=15 复位 → 驻留 → type=16 播放转场视频并换形象（消除黑帧与残留姿势） */
+async function switchAvatarWithTransition(videos, avatarId) {
+  const config = s2?.naturalness?.transition || {};
+  if (config.baseline_reset !== false) {
+    bridge.stream()?.baselineReset();
+    feed('转场 · 已发 baseline_reset（type=15），画面复位到闭口静息态');
+  }
+  await sleep(config.hold_ms ?? 400);
+  if (!bridge.stream()?.switchAvatar) return false;
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('s2-command-result', onResult);
+      resolve(ok);
+    };
+    const onResult = event => {
+      const result = event.detail || {};
+      if (result.source === 'switch_avatar' && result.status === 'finished') finish(result.success !== false);
+    };
+    window.addEventListener('s2-command-result', onResult);
+    const ok = bridge.stream().switchAvatar(videos, avatarId, { switchOnReady: true });
+    if (!ok) finish(false);
+    setTimeout(() => finish(true), 15000);
+  });
+}
+
+function configuredAvatarId() {
+  return element('s2AvatarId')?.value.trim() || localStorage.getItem('s2_transition_avatar') || savedAvatarId();
+}
+
+async function beforePerformance(kind) {
+  const videos = (s2?.naturalness?.transition?.videos || []).filter(Boolean);
+  const avatarId = configuredAvatarId();
+  if (!videos.length || !avatarId) return false;
+  feed(`${kind} · 先播放转场，避免起手黑帧`);
+  return switchAvatarWithTransition(videos, avatarId);
+}
+
+function transitionVideosFromRecent() {
+  const configured = (s2?.naturalness?.transition?.videos || []).filter(Boolean);
+  if (configured.length) return configured;
+  if (s2?.naturalness?.transition?.auto_from_recent !== false && mvTask?.url) return [mvTask.url];
+  return [];
+}
+
 function savedAvatarId() {
   return element('mvAvatarId').value.trim() || localStorage.getItem('s2_avatar_id') || '';
 }
 
-function playMvOffline() {
+async function playMvOffline() {
   if (!mvTask?.url) { toast('还没有已生成的 MV', true); return; }
   if (!bridge.liveActive()) { toast('请先开播，再播放离线 MV', true); return; }
   const avatarId = savedAvatarId();
   if (!avatarId) { toast('请先填写资产形象 ID（avatar_id），否则播完无法切回原形象', true); return; }
   localStorage.setItem('s2_avatar_id', avatarId);
-  const ok = bridge.stream()?.switchAvatar([mvTask.url], avatarId);
+  const ok = await switchAvatarWithTransition([mvTask.url], avatarId);
   if (ok) {
     element('mvPlay').disabled = true;
     feed(`离线MV · type=16 已发出，MV 播完新形象才生效；成功无回执（失败看日志 103）`, 'ok');
   } else feed('离线MV · 信令发送失败（WS 未就绪或 URL 非法）', 'err');
 }
 
-function restoreAvatar() {
+async function restoreAvatar() {
   const avatarId = savedAvatarId();
   if (!avatarId) { toast('请先填写资产形象 ID（avatar_id）', true); return; }
   if (!bridge.liveActive()) { toast('请先开播', true); return; }
-  const videos = mvTask?.url ? [mvTask.url] : null;
-  if (!videos) { toast('切回原形象需要一个转场视频（复用最近 MV 或先生成）；暂无可用视频', true); return; }
-  const ok = bridge.stream()?.switchAvatar(videos, avatarId);
+  const videos = transitionVideosFromRecent();
+  if (!videos.length) { toast('切回原形象需要一个转场视频：在「自然度参数」里填视频，或先生成一个 MV', true); return; }
+  const ok = await switchAvatarWithTransition(videos, avatarId);
   if (ok) feed('恢复形象 · type=16 已发出：转场视频播完后切回原形象', 'ok');
   else feed('恢复形象 · 信令发送失败', 'err');
 }
@@ -607,6 +762,8 @@ async function injectEvent(payload) {
 element('consoleButton').onclick = () => openDrawer(element('consoleDrawer').hidden);
 element('closeConsole').onclick = () => openDrawer(false);
 element('saveTriggers').onclick = saveTriggers;
+element('s2Save').onclick = saveS2;
+element('s2Preview').onclick = previewS2;
 element('saveOpening').onclick = saveOpening;
 element('saveTiers').onclick = saveTiers;
 element('sendDanmaku').onclick = () => {
@@ -777,6 +934,7 @@ element('voiceMaleSelect').onchange = () => applyVoice('voiceMaleSelect');
 element('auditionVoice').onclick = auditionVoice;
 element('detectVoice').onclick = detectVoiceFromAvatar;
 element('reloadMusic').onclick = loadMusic;
+element('singMusic').addEventListener('focus', () => { if (element('singMusic').options.length <= 1) loadMusic(); }, { once: true });
 element('singStart').onclick = startSinging;
 element('singStop').onclick = () => stopSinging('手动停止');
 element('mvCreate').onclick = createMv;
@@ -820,7 +978,8 @@ window.addEventListener('s2-live-ready', async () => {
   } catch (error) { feed(`自动开场失败：${error.message}`, 'err'); }
 });
 
-/* ---------- 拉丁舞双模式：实时动作序列 / Motion Sync 参考视频 ---------- */
+/* ---------- motion_split：1–2s type=9 连跳（排舞计划来自 /api/effect/dance-split） ---------- */
+/* 未生成计划时的预览序列；真实连跳以服务端下发的 plan 为准 */
 const LATIN_SEQUENCE = [
   { name: '拉丁起势', t: '0–2s', note: '抬头、右手上伸、左手腰侧' },
   { name: '恰恰基本步', t: '2–4s', note: '右-左-右，重心与胯部转换' },
@@ -830,6 +989,8 @@ const LATIN_SEQUENCE = [
   { name: '拉丁定格', t: '10–12s', note: '半蹲定格，右斜上/左斜下' },
 ];
 let latinPlaying = false;
+let latinPlan = null;
+let latinAbort = null;
 
 function latinNote(text) {
   const note = element('latinNote');
@@ -837,12 +998,24 @@ function latinNote(text) {
   note.textContent = text || '';
 }
 
+/** 当前要展示/执行的步骤：优先服务端计划，其次静态预览 */
+function latinSteps() {
+  if (latinPlan?.segments?.length) {
+    return latinPlan.segments.map(seg => ({
+      text: seg.text,
+      t: `${seg.at_s}–${Number((seg.at_s + latinPlan.segment_s).toFixed(1))}s`,
+      note: `第 ${seg.index + 1}/${latinPlan.segment_count} 段`,
+    }));
+  }
+  return LATIN_SEQUENCE.map(item => ({ text: item.name, t: item.t, note: item.note }));
+}
+
 function renderLatinSequence() {
   const host = element('latinSequence');
   if (!host) return;
-  host.innerHTML = LATIN_SEQUENCE.map((item, index) => `
+  host.innerHTML = latinSteps().map((item, index) => `
     <button type="button" data-latin-step="${index}">
-      ${item.name}<b>${item.t} · ${item.note}</b>
+      ${item.text}<b>${item.t} · ${item.note}</b>
     </button>
   `).join('');
   host.querySelectorAll('[data-latin-step]').forEach(button => {
@@ -851,31 +1024,71 @@ function renderLatinSequence() {
 }
 
 function sendLatinStep(index) {
-  const item = LATIN_SEQUENCE[index];
+  const item = latinSteps()[index];
   if (!item) return;
-  const ok = bridge.sendAction(item.name);
-  feed(ok ? `拉丁舞 · ${item.t} 已发送：${item.name}` : `拉丁舞 · 动作发送失败：${item.name}`, ok ? 'ok' : 'err');
+  const ok = bridge.sendAction(item.text);
+  feed(ok ? `motion_split · ${item.t} 已发送：${item.text}` : `motion_split · 动作发送失败：${item.text}`, ok ? 'ok' : 'err');
   const host = element('latinSequence');
   host?.querySelectorAll('[data-latin-step]').forEach(button => {
     button.classList.toggle('active', Number(button.dataset.latinStep) === index);
   });
 }
 
+/** 排舞：只算计划，不生成视频（服务端纯函数，无费用） */
+async function buildLatinPlan() {
+  const style = element('latinSeqStyle')?.value || 'latin';
+  const total = Number(element('latinTotal')?.value) || 12;
+  const seg = Number(element('latinSegSec')?.value) || s2?.naturalness?.dance?.segment_seconds || 2;
+  latinPlan = await api('/api/effect/dance-split', {
+    style,
+    total_s: total,
+    segment_s: seg,
+    bridge: element('latinBridge') ? element('latinBridge').checked : true,
+    bridge_text: s2?.naturalness?.dance?.bridge_text,
+  });
+  renderLatinSequence();
+  return latinPlan;
+}
+
 async function playLatinAll() {
-  if (latinPlaying) return;
+  if (latinPlaying) { toast('已有一组连跳进行中，先停止', true); return; }
+  if (!bridge.isReady()) { latinNote('直播未连接，type=9 指令无处下发'); return; }
+  await beforePerformance('跳舞').catch(() => false);
   latinPlaying = true;
+  const abort = new AbortController();
+  latinAbort = abort;
   element('latinPlayAll').disabled = true;
   element('latinStop').disabled = false;
-  latinNote('实时动作序列播放中：6 段 × 2s，跳完自动停');
-  for (let index = 0; index < LATIN_SEQUENCE.length && latinPlaying; index += 1) {
-    sendLatinStep(index);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+  try {
+    latinNote('生成排舞计划…');
+    const plan = await buildLatinPlan();
+    latinNote(`${plan.style === 'free' ? '自由舞' : '拉丁舞'}：${plan.segment_count} 段 × ${plan.segment_s}s（逐段 type=9${plan.bridge ? '，段间收势' : ''}）`);
+    feed(`motion_split · 计划就绪：${plan.segment_count} 段 × ${plan.segment_s}s（不生成视频，无渲染费用）`, 'ok');
+    for (const seg of plan.segments) {
+      if (!latinPlaying || abort.signal.aborted) break;
+      sendLatinStep(seg.index);
+      await sleep(plan.segment_s * 1000);
+      if (plan.bridge && seg.index < plan.segment_count - 1 && latinPlaying && !abort.signal.aborted) {
+        bridge.sendAction(plan.bridge_text);
+      }
+    }
+    if (latinPlaying && !abort.signal.aborted) {
+      bridge.sendAction(plan.bridge_text);
+      await sleep(400);
+      if (plan.reset_after) bridge.stream()?.baselineReset();
+      feed('motion_split · 连跳完成，已发 baseline_reset 复位', 'ok');
+      latinNote('本组连跳完成（已复位到闭口静息态）');
+    }
+  } catch (error) {
+    latinNote(`连跳失败：${error.message}`);
+    feed(`motion_split 失败：${error.message}`, 'err');
+  } finally {
+    latinPlaying = false;
+    latinAbort = null;
+    element('latinPlayAll').disabled = false;
+    element('latinStop').disabled = true;
+    element('latinSequence')?.querySelectorAll('[data-latin-step]').forEach(button => button.classList.remove('active'));
   }
-  latinPlaying = false;
-  element('latinPlayAll').disabled = false;
-  element('latinStop').disabled = true;
-  element('latinSequence')?.querySelectorAll('[data-latin-step]').forEach(button => button.classList.remove('active'));
-  latinNote('实时动作序列结束；如需更连贯的整段舞蹈，请用 Motion Sync。');
 }
 
 async function createLatinMotionSync() {
@@ -944,6 +1157,7 @@ window.addEventListener('showroom-applied', async event => {
 });
 
 (async () => {
+  loadS2().catch(() => {});
   try { manifest = await api('/api/interaction'); renderManifest(); feed('中控台已就绪（策略引擎 V2）', 'ok'); }
   catch (error) { feed(`中控台初始化失败：${error.message}`, 'err'); }
 })();

@@ -186,3 +186,10 @@ body.canvas-mode .canvas-exit{display:block}
 .showroom-params{gap:6px}
 .showroom-params label{flex:1;display:grid;gap:3px;font-size:9px;color:var(--muted)}
 .showroom-params input{width:100%;padding:6px;font-size:11px}
+
+/* S2 自然度参数 */
+.s2-fields{gap:6px}
+.s2-fields label{flex:1;display:grid;gap:3px;font-size:10px;color:var(--muted)}
+.s2-fields input{width:100%;padding:6px;font-size:11px}
+#s2Videos{min-height:58px;font-size:11px}
+#s2PreviewOut{max-height:180px;overflow:auto;font-size:10px;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:8px;white-space:pre-wrap}

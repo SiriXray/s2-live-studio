@@ -372,7 +372,7 @@ async function start() {
       if (!library.ready) await prepareMonetLibrary();
       if (version !== state.version) return;
     }
-    const created = await api('/api/live', { outfit_id: state.selected.id, experience });
+    const created = await api('/api/live', { outfit_id: state.selected.id, experience, resolution: element('s2Resolution')?.value || '720p' });
     if (version !== state.version) { await api(`/api/live/${created.live.id}/close`, {}); return; }
     state.live = created.live;
     state.pushUserId = created.push_user_id;
@@ -382,6 +382,8 @@ async function start() {
     }, onSwitchAvatarError: error => {
       log(`切换形象/离线MV失败：${error.error_code || '?'} ${error.error_msg || ''}`, 'err');
       window.__switchAvatarFailed?.(error);
+    }, onCommandResult: result => {
+      window.dispatchEvent(new CustomEvent('s2-command-result', { detail: result }));
     }, onHangup: reason => { if (version === state.version) { toast(`直播连接已结束：${reason}`, true); stop().catch(report); } } });
     await state.stream.connect();
     if (version !== state.version) return;
@@ -1049,6 +1051,8 @@ window.S2Bridge = {
     setTimeout(() => pop.remove(), 2600);
   },
   sendAction: (name, options) => state.stream?.sendAction(name, options) || false,
+  switchAvatar: (videos, avatarId, options) => state.stream?.switchAvatar(videos, avatarId, options) || false,
+  baselineReset: () => state.stream?.baselineReset() || false,
   editingReady: () => Boolean(state.editingStream?.ready),
   switchPrompt: (image, type) => state.editingStream?.switchPrompt(image, type) || false,
   referenceImage: async () => {
