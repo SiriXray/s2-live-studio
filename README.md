@@ -50,6 +50,7 @@ S2 Avatar 实时渲染 → TRTC 推流
 | 自然停顿 | 参考 bencao-live-studio-public 的 NaturalPause：近期事件 + 最近动作 → LLM 选一个；无合适动作则回镜头 |
 | 拉丁舞双模式 | ① 6 段 × 2s 实时动作序列；② Motion Sync 12s 参考视频（公开链接 / 本地上传） |
 | 带货分段脚本 | 30s 开场 / 3min 单品 / 1min 答疑 / 真实机制；逐句 TTS + 动作组，价格库存时效必填 |
+| S2 自然度参数 | 分辨率、动作库、action_prompt、转场视频、唱尾、ducking、舞蹈分段，右侧中控台可改 |
 | 样板间 | 6 个行业最佳实践 + 6 个场景 + 14 个人物 + 6 套话术 + 5 套动作模板，任意组合并一键写回控制台 |
 | 录制范围 | 仅主播 9:16 / 16:9 直播画布 / 整页；Region Capture 只录出镜区域，含主播声音 |
 | 礼物事件 | 金额档位 → 动作组 + 礼物特效；大型礼物优先，避免连续重复 |
@@ -208,6 +209,7 @@ Nginx 需要把 `/ws/live` 的 WebSocket 升级头转发给 Node；`/voices/` �
 ## 动作与自然度
 
 - [S2 组件版参数、选型与社交直播自然度](docs/s2-component-and-naturalness.md)
+- [转场动画 / 唱跳自然度参数手册](docs/s2-transition-playbook.md)
 - [自然度与动作机制说明](NATURALNESS.md)
 - [教育 / 带货直播自然度 Playbook](docs/live-playbook.md)
 - 60 条动作库：表情、手势、开场/收尾、坐姿、舞台、拉丁舞
