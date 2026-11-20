@@ -583,6 +583,7 @@ function fillS2Form(value) {
   element('s2Tail').value = n.singing?.tail_pad_ms ?? 600;
   element('s2Ducking').value = n.singing?.ducking ?? 0.35;
   element('s2Baseline').checked = n.transition?.baseline_reset !== false;
+  element('s2OnReady').checked = n.transition?.switch_on_ready !== false;
   element('s2SuppressIdle').checked = n.singing?.suppress_idle !== false;
   element('s2Bridge').checked = n.dance?.bridge_action !== false;
   element('s2Videos').value = (n.transition?.videos || []).join('\n');
@@ -598,6 +599,7 @@ function s2FromForm() {
     naturalness: {
       transition: {
         baseline_reset: element('s2Baseline').checked,
+        switch_on_ready: element('s2OnReady').checked,
         videos: element('s2Videos').value.split(/\s+/).map(item => item.trim()).filter(Boolean),
         hold_ms: Number(element('s2Hold').value),
         auto_from_recent: base.naturalness?.transition?.auto_from_recent !== false,
@@ -690,7 +692,7 @@ async function switchAvatarWithTransition(videos, avatarId) {
       if (result.source === 'switch_avatar' && result.status === 'finished') finish(result.success !== false);
     };
     window.addEventListener('s2-command-result', onResult);
-    const ok = bridge.stream().switchAvatar(videos, avatarId, { switchOnReady: true });
+    const ok = bridge.stream().switchAvatar(videos, avatarId, { switchOnReady: config.switch_on_ready !== false });
     if (!ok) finish(false);
     setTimeout(() => finish(true), 15000);
   });

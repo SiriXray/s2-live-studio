@@ -58,7 +58,7 @@ async function play() {
     setStatus(`type=15 已发；${hold}ms 后播放 ${list.length} 段转场…`);
     await new Promise(resolve => setTimeout(resolve, hold));
   }
-  const ok = bridge.switchAvatar(list, avatarId);
+  const ok = bridge.switchAvatar(list, avatarId, { switchOnReady: $('s2OnReady')?.checked !== false });
   setStatus(ok ? `type=16 已发出：${list.length} 段转场 → avatar ${avatarId}` : 'type=16 发送失败：WS 未就绪或参数不合法', !ok);
   if (ok) window.S2Bridge?.log?.('转场 · switch_avatar 已发送');
 }

@@ -177,6 +177,7 @@
         <div class="sim-row s2-fields"><label>舞蹈分段 s<input id="s2DanceSeg" type="number" min="1" max="10" step="0.5" value="2"></label><label>转场驻留 ms<input id="s2Hold" type="number" min="0" max="5000" value="400"></label></div>
         <div class="sim-row s2-fields"><label>唱尾 ms<input id="s2Tail" type="number" min="0" max="3000" value="600"></label><label>ducking<input id="s2Ducking" type="number" min="0" max="1" step="0.05" value="0.35"></label></div>
         <label class="check-inline"><input id="s2Baseline" type="checkbox" checked> 转场前复位（type 15）</label>
+        <label class="check-inline"><input id="s2OnReady" type="checkbox" checked> 转场就绪即切（switch_on_ready）</label>
         <label class="check-inline"><input id="s2SuppressIdle" type="checkbox" checked> 唱歌时抑制 idle</label>
         <label class="check-inline"><input id="s2Bridge" type="checkbox" checked> 舞蹈动作桥接</label>
         <textarea id="s2Videos" rows="3" placeholder="转场视频 URL，每行一个（1–10 个，http(s)，单个 ≤30min，累计 ≤60min）"></textarea>
