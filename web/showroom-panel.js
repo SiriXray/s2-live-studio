@@ -24,16 +24,16 @@ function currentAction() {
 }
 
 const PEOPLE = [
-  { industry: 'social', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '温柔陪伴', meta: '社交直播 · 深夜客厅', image: '/showroom/avatars/social.jpg' },
-  { industry: 'social', scene: 'living_room', persona: 'sweet_energy', script: 'social_5', action: 'natural', name: '甜美元气', meta: '社交直播 · 甜心互动', image: '/showroom/avatars/sweet.jpg' },
-  { industry: 'social', scene: 'living_room', persona: 'funny_playful', script: 'social_5', action: 'lively', name: '搞笑俏皮', meta: '社交直播 · 轻松整活', image: '/showroom/avatars/funny.jpg' },
-  { industry: 'education', scene: 'scholar', persona: 'elegant_edu', script: 'education_20', action: 'education', name: '知性讲师', meta: '教育 · 知识书房', image: '/showroom/avatars/education.jpg' },
-  { industry: 'commerce', scene: 'market', persona: 'hype_sales', script: 'commerce_5', action: 'commerce', name: '活力带货', meta: '带货 · 卖场直播', image: '/showroom/avatars/commerce.jpg' },
-  { industry: 'local', scene: 'kitchen', persona: 'lively_rural', script: 'local_5', action: 'lively', name: '生活主理人', meta: '本地生活 · 田园厨房', image: '/showroom/avatars/local.jpg' },
-  { industry: 'gaming', scene: 'palace', persona: 'npc_gui_fei', script: 'npc_scene', action: 'stage', name: '宫宴角色', meta: '影游互动 · 影游宫宴', image: '/showroom/avatars/gaming.jpg' },
-  { industry: 'gaming', scene: 'palace', persona: 'npc_qing_dai', script: 'npc_scene', action: 'stage', name: '古风侍女', meta: '影游互动 · 宫宴侍女', image: '/showroom/avatars/qing.jpg' },
-  { industry: 'music', scene: 'stage', persona: 'velvety_night', script: 'music_5', action: 'natural', name: '磁性电台', meta: '音乐电台 · 音乐舞台', image: '/showroom/avatars/music.jpg' },
-  { industry: 'music', scene: 'stage', persona: 'cool_queen', script: 'music_5', action: 'natural', name: '高冷御姐', meta: '音乐电台 · 冷感舞台', image: '/showroom/avatars/cool.jpg' },
+  { industry: 'social', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '温柔陪伴', meta: '社交直播 · 深夜客厅', image: '/showroom/avatars/social.jpg', outfit: '样板间·温柔陪伴', voice: 'female_tender_e' },
+  { industry: 'social', scene: 'living_room', persona: 'sweet_energy', script: 'social_5', action: 'natural', name: '甜美元气', meta: '社交直播 · 甜心互动', image: '/showroom/avatars/sweet.jpg', outfit: '样板间·甜美元气', voice: 'female_lively_d' },
+  { industry: 'social', scene: 'living_room', persona: 'funny_playful', script: 'social_5', action: 'lively', name: '搞笑俏皮', meta: '社交直播 · 轻松整活', image: '/showroom/avatars/funny.jpg', outfit: '样板间·搞笑俏皮', voice: 'male_low_a' },
+  { industry: 'education', scene: 'scholar', persona: 'elegant_edu', script: 'education_20', action: 'education', name: '知性讲师', meta: '教育 · 知识书房', image: '/showroom/avatars/education.jpg', outfit: '样板间·知性讲师', voice: 'female_scholar_g' },
+  { industry: 'commerce', scene: 'market', persona: 'hype_sales', script: 'commerce_5', action: 'commerce', name: '活力带货', meta: '带货 · 卖场直播', image: '/showroom/avatars/commerce.jpg', outfit: '样板间·活力带货', voice: 'female_bright_h' },
+  { industry: 'local', scene: 'kitchen', persona: 'lively_rural', script: 'local_5', action: 'lively', name: '生活主理人', meta: '本地生活 · 田园厨房', image: '/showroom/avatars/local.jpg', outfit: '样板间·生活主理人', voice: 'female_lively_d' },
+  { industry: 'gaming', scene: 'palace', persona: 'npc_gui_fei', script: 'npc_scene', action: 'stage', name: '宫宴角色', meta: '影游互动 · 影游宫宴', image: '/showroom/avatars/gaming.jpg', outfit: '样板间·宫宴角色', voice: 'female_gentle_c' },
+  { industry: 'gaming', scene: 'palace', persona: 'npc_qing_dai', script: 'npc_scene', action: 'stage', name: '古风侍女', meta: '影游互动 · 宫宴侍女', image: '/showroom/avatars/qing.jpg', outfit: '样板间·古风侍女', voice: 'female_tender_e' },
+  { industry: 'music', scene: 'stage', persona: 'velvety_night', script: 'music_5', action: 'natural', name: '磁性电台', meta: '音乐电台 · 音乐舞台', image: '/showroom/avatars/music.jpg', outfit: '样板间·磁性电台', voice: 'male_velvety_f' },
+  { industry: 'music', scene: 'stage', persona: 'cool_queen', script: 'music_5', action: 'natural', name: '高冷御姐', meta: '音乐电台 · 冷感舞台', image: '/showroom/avatars/cool.jpg', outfit: '样板间·高冷御姐', voice: 'female_clear_a' },
 ];
 
 function renderPeople() {
@@ -86,7 +86,7 @@ async function applyPerson(person, startAfter) {
   renderIndustries();
   renderScenes();
   status(`已选人物：${person.name} · ${person.meta}`);
-  return apply(startAfter);
+  return apply(startAfter, person.outfit, person.voice);
 }
 
 
@@ -192,13 +192,14 @@ function syncFromState(state) {
   renderScenes();
 }
 
-async function apply(startAfter = false) {
+async function apply(startAfter = false, preferredOutfit = '', preferredVoice = '') {
   if (!catalog) return false;
   let applied = false;
   const payload = {
     industry_id: selectedIndustry,
     scene_id: selectedScene,
     persona_id: $('showroomPersona').value,
+    voice_id: preferredVoice || undefined,
     script_id: $('showroomScript').value,
     action_id: $('showroomAction').value,
     opening: $('showroomOpening').value.trim(),
@@ -222,7 +223,7 @@ async function apply(startAfter = false) {
     if (data.showroom) syncFromState(data.showroom);
     const script = currentScript();
     const scene = catalog.scenes.find(item => item.id === selectedScene);
-    const outfit = outfits.find(item => item.name === scene?.outfit_name);
+    const outfit = outfits.find(item => item.name === (preferredOutfit || scene?.outfit_name));
     let sceneNote = outfit ? '' : '；场景参考已应用，出镜形象请在造型库选择';
     if (outfit) {
       if (window.S2Bridge?.isRunning?.()) {

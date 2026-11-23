@@ -212,7 +212,7 @@ function createStudio(options = {}) {
     const { id: contentId } = imageData(body.image_uri);
     const id = crypto.createHash('sha256').update(`${body.kind || 'avatar'}:${contentId}`).digest('hex');
     if (typeof body.name !== 'string' || !body.name.trim() || body.name.length > 60) throw new Error('造型名称须为1至60字');
-    if (outfits().length >= 30 && !fs.existsSync(path.join(dataDir, `${id}.json`))) throw new Error('造型库最多保留30张，请先删除旧造型');
+    if (outfits().length >= 60 && !fs.existsSync(path.join(dataDir, `${id}.json`))) throw new Error('造型库最多保留60张，请先删除旧造型');
     if (!['avatar', 'reference'].includes(body.kind || 'avatar')) throw new Error('图片用途不正确');
     const personaId = body.persona_id ? (getPersona(body.persona_id) ? body.persona_id : (() => { throw new Error('人设ID不正确'); })()) : '';
     fs.mkdirSync(dataDir, { recursive: true });
@@ -492,7 +492,8 @@ function createStudio(options = {}) {
       const next = showroom.applyState(dataDir, input);
       const person = getPersona(next.persona_id);
       const gender = ['female', 'male'].includes(next.voice_gender) ? next.voice_gender : person?.gender;
-      const voice = voiceForPersona(person, gender);
+      const requestedVoice = getVoice(input.voice_id);
+      const voice = requestedVoice || voiceForPersona(person, gender);
       if (voice && typeof store.save === 'function') store.save(patchForVoice(voice));
       const manifest = interaction.updateConfig({
         persona_id: next.persona_id,
