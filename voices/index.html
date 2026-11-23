@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>音色试听 · S2 Live Studio</title>
+<link rel="canonical" href="https://s2.106.15.126.46.nip.io/voices/">
 <style>
 :root{
   --bg:#0b0914;--panel:rgba(255,255,255,.055);--panel-strong:rgba(18,15,35,.86);
@@ -95,7 +96,7 @@ const SOUL_EXTRA = [
   { name:'开朗映岚 · 官方预置', voice:'LOXI_F_Y_ZH_Lively-Natural_Dialog_7ea6', gender:'female', tags:['官方预置'] },
 ];
 const PORTRAITS = {
-  '男明星': '/voices/portraits/p26.jpg',
+  '女明星3': '/voices/portraits/p43.jpg',
   '女明星1': '/voices/portraits/p3.jpg',
   '女明星2': '/voices/portraits/p60.jpg',
   '女主持': '/voices/portraits/p14.jpg',
@@ -244,7 +245,7 @@ async function load() {
   const minimax = provider('minimax');
   const minimaxAudio = Object.fromEntries(minimax.voices.map(v => [v.id, `/voices/minimax/system/${v.id}.wav`]));
   const minimaxVoices = [
-    ...cloneItems.map(item => ({ name: item.name, voice: item.voice_id, gender: item.gender, tags: ['克隆', ...(item.tags || [])], audio: item.demo })),
+    ...cloneItems.map(item => ({ name: item.name, voice: item.voice_id, gender: item.gender, tags: [...new Set(['克隆', ...(item.tags || [])])], audio: item.demo })),
     ...minimax.voices.map(v => ({ ...v, voice: v.id, audio: minimaxAudio[v.id], tags: ['官方预置', ...(v.tags || [])] })),
     ...STATIC_MINIMAX_LEGACY,
   ];
