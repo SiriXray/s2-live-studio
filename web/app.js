@@ -1037,6 +1037,7 @@ async function speakOut(text, audioBase64, subtitleText) {
 window.S2Bridge = {
   isReady: () => Boolean(state.stream?.ready),
   isRunning: () => state.running,
+  startLive: () => start(),
   speakOut,
   interrupt: () => interrupt(false),
   // 礼物即时动效：叠在直播画面上的轻量全屏特效（不依赖离线任务，零延迟）

@@ -23,6 +23,73 @@ function currentAction() {
   return catalog?.actions.find(item => item.id === $('showroomAction').value) || null;
 }
 
+const PEOPLE = [
+  { industry: 'social', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '温柔陪伴', meta: '社交直播 · 深夜客厅', image: '/showroom/avatars/social.jpg' },
+  { industry: 'social', scene: 'living_room', persona: 'sweet_energy', script: 'social_5', action: 'natural', name: '甜美元气', meta: '社交直播 · 甜心互动', image: '/showroom/avatars/sweet.jpg' },
+  { industry: 'social', scene: 'living_room', persona: 'funny_playful', script: 'social_5', action: 'lively', name: '搞笑俏皮', meta: '社交直播 · 轻松整活', image: '/showroom/avatars/funny.jpg' },
+  { industry: 'education', scene: 'scholar', persona: 'elegant_edu', script: 'education_20', action: 'education', name: '知性讲师', meta: '教育 · 知识书房', image: '/showroom/avatars/education.jpg' },
+  { industry: 'commerce', scene: 'market', persona: 'hype_sales', script: 'commerce_5', action: 'commerce', name: '活力带货', meta: '带货 · 卖场直播', image: '/showroom/avatars/commerce.jpg' },
+  { industry: 'local', scene: 'kitchen', persona: 'lively_rural', script: 'local_5', action: 'lively', name: '生活主理人', meta: '本地生活 · 田园厨房', image: '/showroom/avatars/local.jpg' },
+  { industry: 'gaming', scene: 'palace', persona: 'npc_gui_fei', script: 'npc_scene', action: 'stage', name: '宫宴角色', meta: '影游互动 · 影游宫宴', image: '/showroom/avatars/gaming.jpg' },
+  { industry: 'gaming', scene: 'palace', persona: 'npc_qing_dai', script: 'npc_scene', action: 'stage', name: '古风侍女', meta: '影游互动 · 宫宴侍女', image: '/showroom/avatars/qing.jpg' },
+  { industry: 'music', scene: 'stage', persona: 'velvety_night', script: 'music_5', action: 'natural', name: '磁性电台', meta: '音乐电台 · 音乐舞台', image: '/showroom/avatars/music.jpg' },
+  { industry: 'music', scene: 'stage', persona: 'cool_queen', script: 'music_5', action: 'natural', name: '高冷御姐', meta: '音乐电台 · 冷感舞台', image: '/showroom/avatars/cool.jpg' },
+];
+
+function renderPeople() {
+  const host = $('showroomPeople');
+  if (!host) return;
+  host.replaceChildren();
+  for (const person of PEOPLE) {
+    const card = document.createElement('div');
+    card.className = 'showroom-person';
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `${person.name}，${person.meta}`);
+    const image = document.createElement('img');
+    image.src = person.image;
+    image.alt = person.name;
+    image.loading = 'eager';
+    image.onerror = () => { image.style.display = 'none'; };
+    const start = document.createElement('button');
+    start.type = 'button';
+    start.className = 'sp-start';
+    start.textContent = '开播';
+    start.onclick = event => { event.stopPropagation(); applyPerson(person, true); };
+    const info = document.createElement('div');
+    info.className = 'sp-info';
+    const name = document.createElement('div');
+    name.className = 'sp-name';
+    name.textContent = person.name;
+    const meta = document.createElement('div');
+    meta.className = 'sp-meta';
+    meta.textContent = person.meta;
+    info.append(name, meta);
+    card.append(image, start, info);
+    card.onclick = () => applyPerson(person, false);
+    card.onkeydown = event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); applyPerson(person, false); }
+    };
+    host.appendChild(card);
+  }
+}
+
+async function applyPerson(person, startAfter) {
+  const industry = catalog?.industries.find(item => item.id === person.industry);
+  selectedIndustry = person.industry;
+  selectedScene = person.scene;
+  $('showroomPersona').value = person.persona;
+  $('showroomScript').value = person.script;
+  $('showroomAction').value = person.action;
+  $('showroomOpening').value = currentScript()?.opening || '';
+  setParams(industry?.params || {});
+  renderIndustries();
+  renderScenes();
+  status(`已选人物：${person.name} · ${person.meta}`);
+  return apply(startAfter);
+}
+
+
 function renderIndustries() {
   const host = $('showroomIndustries');
   host.replaceChildren();
@@ -125,8 +192,9 @@ function syncFromState(state) {
   renderScenes();
 }
 
-async function apply() {
-  if (!catalog) return;
+async function apply(startAfter = false) {
+  if (!catalog) return false;
+  let applied = false;
   const payload = {
     industry_id: selectedIndustry,
     scene_id: selectedScene,
@@ -170,11 +238,27 @@ async function apply() {
     }
     status(`已应用：${script?.name || ''} · ${currentAction()?.name || ''} · 场景 ${scene?.name || selectedScene}${sceneNote}`);
     window.dispatchEvent(new CustomEvent('showroom-applied', { detail: data }));
+    applied = true;
   } catch (error) {
     status(`应用失败：${error.message}`, true);
+    return false;
   } finally {
     button.disabled = false;
   }
+  if (applied && startAfter) {
+    if (window.S2Bridge?.isRunning?.()) {
+      status('当前已在直播中，人物与话术已应用');
+      return true;
+    }
+    status('已应用，正在开播…');
+    try {
+      await window.S2Bridge?.startLive?.();
+    } catch (error) {
+      status(`应用成功，但开播失败：${error.message}`, true);
+      return false;
+    }
+  }
+  return applied;
 }
 
 async function tryActions() {
@@ -202,6 +286,7 @@ async function load() {
     catalog = await response.json();
     outfits = outfitResponse?.ok ? (await outfitResponse.json()).items || [] : [];
     renderOptions();
+    renderPeople();
     syncFromState(catalog.state);
     status(`当前：${catalog.state.persona_id} · ${catalog.state.script_id} · ${catalog.state.action_id}`);
   } catch (error) {
