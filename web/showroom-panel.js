@@ -310,3 +310,13 @@ if (showroomNav) {
     setTimeout(() => document.getElementById('csShowroom')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
   });
 }
+
+const showroomTopNav = document.getElementById('showroomTopNav');
+if (showroomTopNav) {
+  showroomTopNav.addEventListener('click', event => {
+    event.preventDefault();
+    const drawer = document.getElementById('consoleDrawer');
+    if (drawer?.hidden) document.getElementById('consoleButton')?.click();
+    setTimeout(() => document.getElementById('csShowroom')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
+  });
+}
