@@ -38,8 +38,12 @@ h1{font-size:22px;margin:0;letter-spacing:.02em}
 .section-head p{margin:0 0 2px;color:var(--muted);font-size:11px}
 .section-head .count{margin-left:auto;color:var(--muted);font-size:11px}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.voice-card{padding:16px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018));display:flex;flex-direction:column;gap:8px;min-height:150px}
-.voice-card:hover{border-color:rgba(155,135,255,.35);background:linear-gradient(145deg,rgba(255,255,255,.085),rgba(255,255,255,.025))}
+.voice-card{position:relative;padding:16px;border:1px solid var(--line);border-radius:15px;background-color:rgba(18,15,35,.78);display:flex;flex-direction:column;gap:8px;min-height:170px;overflow:hidden;isolation:isolate}
+.voice-card::before{content:'';position:absolute;top:0;right:0;bottom:0;width:46%;background:var(--portrait,none) center center/cover no-repeat;opacity:.66;filter:saturate(.92);-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 28%,#000 100%);mask-image:linear-gradient(90deg,transparent 0%,#000 28%,#000 100%);z-index:0;pointer-events:none}
+.voice-card::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,10,22,.97) 0%,rgba(12,10,22,.82) 44%,rgba(12,10,22,.22) 74%,rgba(12,10,22,.10) 100%);z-index:1;pointer-events:none}
+.voice-card > *{position:relative;z-index:2}
+.voice-card:hover{border-color:rgba(155,135,255,.45)}
+.voice-card:hover::before{opacity:.7}
 .voice-top{display:flex;align-items:flex-start;gap:10px}
 .avatar{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:12px;color:#dfe6ff;background:linear-gradient(135deg,rgba(124,108,255,.32),rgba(91,140,255,.16));flex:0 0 34px}
 .voice-name{font-size:15px;font-weight:600;line-height:1.2}
@@ -90,6 +94,48 @@ const SOUL_EXTRA = [
   { name:'知性小夏 · 官方预置', voice:'LOXI_F_Y_ZH_Lively-Natural_Podcast_1459', gender:'female', tags:['官方预置'] },
   { name:'开朗映岚 · 官方预置', voice:'LOXI_F_Y_ZH_Lively-Natural_Dialog_7ea6', gender:'female', tags:['官方预置'] },
 ];
+const PORTRAITS = {
+  '男明星': '/voices/portraits/p26.jpg',
+  '女明星1': '/voices/portraits/p3.jpg',
+  '女明星2': '/voices/portraits/p60.jpg',
+  '女主持': '/voices/portraits/p14.jpg',
+  'female-shaonv': '/voices/portraits/p8.jpg',
+  'female-yujie': '/voices/portraits/p9.jpg',
+  'female-chengshu': '/voices/portraits/p25.jpg',
+  'female-tianmei': '/voices/portraits/p47.jpg',
+  'male-qn-qingse': '/voices/portraits/p35.jpg',
+  'male-qn-jingying': '/voices/portraits/p34.jpg',
+  'male-qn-badao': '/voices/portraits/p38.jpg',
+  'presenter_male': '/voices/portraits/p36.jpg',
+  'presenter_female': '/voices/portraits/p23.jpg',
+  'audiobook_male_1': '/voices/portraits/p31.jpg',
+  'voice_zh_3535668268758896': '/voices/portraits/p13.jpg',
+  'clone_1793668736_4d87a4f2': '/voices/portraits/p24.jpg',
+  'probe_tts_01': '/voices/portraits/p11.jpg',
+  'voice_zh_3536631501522332': '/voices/portraits/p37.jpg',
+  'LOXI_F_Y_ZH_Lively-Natural_Dialog_3abe': '/voices/portraits/p49.jpg',
+  'LOXI_F_Y_ZH_Tender-Natural_Dialog_d6c6': '/voices/portraits/p1.jpg',
+  'LOXI_M_A_ZH_Velvety-Mature_Dialog_a7c0': '/voices/portraits/p44.jpg',
+  's2_liuyifei_v030_11': '/voices/portraits/p7.jpg',
+  'LOXI_F_Y_ZH_Tender-Natural_Podcast_9dfb': '/voices/portraits/p56.jpg',
+  'LOXI_F_Y_ZH_Lively-Natural_Podcast_1459': '/voices/portraits/p39.jpg',
+  'LOXI_F_Y_ZH_Lively-Natural_Dialog_7ea6': '/voices/portraits/p19.jpg',
+  'zh_female_vv_uranus_bigtts': '/voices/portraits/p10.jpg',
+  'zh_female_xiaohe_uranus_bigtts': '/voices/portraits/p51.jpg',
+  'zh_male_m191_uranus_bigtts': '/voices/portraits/p45.jpg',
+  'zh_male_taocheng_uranus_bigtts': '/voices/portraits/p35.jpg',
+  'zh_female_qingxinnvsheng_uranus_bigtts': '/voices/portraits/p6.jpg',
+  'zh_female_tianmeixiaoyuan_uranus_bigtts': '/voices/portraits/p57.jpg',
+  'zh_female_shuangkuaisisi_uranus_bigtts': '/voices/portraits/p29.jpg',
+  'zh_female_gaolengyujie_uranus_bigtts': '/voices/portraits/p46.jpg',
+  'zh_male_yangguangqingnian_uranus_bigtts': '/voices/portraits/p13.jpg',
+  'zh_male_cixingjieshuonan_uranus_bigtts': '/voices/portraits/p31.jpg',
+  'xiaoyan': '/voices/portraits/p2.jpg',
+  'aisjiuxu': '/voices/portraits/p36.jpg',
+  'aisxping': '/voices/portraits/p54.jpg',
+  'aisjinger': '/voices/portraits/p30.jpg',
+  'aisbabyxu': '/voices/portraits/p28.jpg',
+};
 const state = { models: [], byId: {} };
 const modelTabs = document.getElementById('modelTabs');
 const root = document.getElementById('models');
@@ -102,6 +148,8 @@ function tagClass(text) {
 function cardFor(model, voice) {
   const article = document.createElement('article');
   article.className = 'voice-card';
+  const portrait = PORTRAITS[voice.voice] || PORTRAITS[voice.name];
+  if (portrait) article.style.setProperty('--portrait', `url("${portrait}")`);
   const top = document.createElement('div');
   top.className = 'voice-top';
   const avatar = document.createElement('div');
@@ -192,7 +240,7 @@ async function load() {
   const minimaxAudio = Object.fromEntries(minimax.voices.map(v => [v.id, `/voices/minimax/system/${v.id}.wav`]));
   const minimaxVoices = [
     ...cloneItems.map(item => ({ name: item.name, voice: item.voice_id, gender: item.gender, tags: ['克隆', ...(item.tags || [])], audio: item.demo })),
-    ...minimax.voices.map(v => ({ ...v, audio: minimaxAudio[v.id], tags: ['官方预置', ...(v.tags || [])] })),
+    ...minimax.voices.map(v => ({ ...v, voice: v.id, audio: minimaxAudio[v.id], tags: ['官方预置', ...(v.tags || [])] })),
     ...STATIC_MINIMAX_LEGACY,
   ];
   const soul = provider('soul');
@@ -205,8 +253,8 @@ async function load() {
   state.models = [
     { id:'minimax', name:'MiniMax', color:'#ff8a5c', ready:minimax.ready, hint:'官方预置 + 已克隆 + 历史候选', voices:minimaxVoices },
     { id:'soul', name:'Soul', color:'#a78bfa', ready:soul.ready, hint:'直播实测音色', voices:soulVoices },
-    { id:'doubao', name:'豆包', color:'#5b8cff', ready:doubao.ready, hint:'火山引擎 · BV 系', voices:doubao.voices.map(v => ({ ...v, tags:[...(v.tags||[])] })) },
-    { id:'iflytek', name:'科大讯飞', color:'#46c7b8', ready:iflytek.ready, hint:'WebSocket v2', voices:iflytek.voices.map(v => ({ ...v, tags:[...(v.tags||[])] })) },
+    { id:'doubao', name:'豆包', color:'#5b8cff', ready:doubao.ready, hint:'火山引擎 · BV 系', voices:doubao.voices.map(v => ({ ...v, voice: v.id, tags:[...(v.tags||[])] })) },
+    { id:'iflytek', name:'科大讯飞', color:'#46c7b8', ready:iflytek.ready, hint:'WebSocket v2', voices:iflytek.voices.map(v => ({ ...v, voice: v.id, tags:[...(v.tags||[])] })) },
   ];
   state.byId = Object.fromEntries(state.models.map(model => [model.id, model]));
   render();
