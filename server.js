@@ -77,8 +77,14 @@ async function musicFromVideoUrl(url) {
 }
 
 function json(response, status, value) {
-  response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
-  response.end(JSON.stringify(value));
+  const body = Buffer.from(JSON.stringify(value));
+  response.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Length': body.length,
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  response.end(body);
 }
 
 async function readJson(request, limit = 12 * 1024 * 1024) {
@@ -254,7 +260,13 @@ function createStudio(options = {}) {
         voice: String(input.voice || ''),
         text: String(input.text || ''),
       }, AbortSignal.timeout(45000));
-      return json(response, 200, result);
+      const generatedDir = path.join(__dirname, '..', 'voices', 'generated');
+      fs.mkdirSync(generatedDir, { recursive: true });
+      const name = `preview-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.wav`;
+      const file = path.join(generatedDir, name);
+      fs.writeFileSync(file, Buffer.from(result.audio, 'base64'), { mode: 0o644 });
+      fs.chmodSync(file, 0o644);
+      return json(response, 200, { ...result, audio: undefined, url: `/voices/generated/${name}` });
     }
     if (request.method === 'POST' && pathname === '/api/voice/provider-config') {
       const input = await readJson(request, 64 * 1024);

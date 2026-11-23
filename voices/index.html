@@ -155,6 +155,7 @@ footer a{color:var(--dim)}
   <div class="provider-tabs" id="providerTabs"></div>
   <div class="grid" id="providerVoices"></div>
   <p id="providerStatus" class="note"></p>
+  <audio id="providerAudio" controls preload="metadata" style="width:100%;margin:6px 0 12px;display:none"></audio>
   <details class="provider-config">
     <summary>配置豆包 / 讯飞 Key（MiniMax / Soul 使用现有连接设置）</summary>
     <div class="provider-config-grid">
@@ -261,7 +262,7 @@ proven.innerHTML = PROVEN.map(v => `
   <div class="badges"><span class="badge ok">✓ 实测 ${v.seconds}</span><span class="badge">人设 · ${v.persona}</span></div>
   <p class="hint">${v.hint}</p>
   <div class="vid"><span title="${v.soul}">${v.soul}</span><button data-copy="${v.soul}">复制</button></div>
-  <audio controls preload="none" src="${v.src}"></audio>
+  <audio controls preload="metadata" src="${v.src}"></audio>
   <div class="actions"><button class="btn primary" data-use="${v.id}" data-name="${v.label}">设为当前音色</button></div>
 </article>`).join('');
 
@@ -277,7 +278,7 @@ document.getElementById('minimax').innerHTML = MINIMAX.map(v => `
   <div class="head"><div class="glyph">${v.cls === 'm' ? '男' : '女'}</div><div class="label">${v.label}</div></div>
   <div class="badges"><span class="badge">${v.tag}</span><span class="badge">speech-2.8-turbo 实合成</span></div>
   <div class="vid"><span title="${v.id}">${v.id}</span><button data-copy="${v.id}">复制</button></div>
-  <audio controls preload="none" src="${v.src}"></audio>
+  <audio controls preload="metadata" src="${v.src}"></audio>
 </article>`).join('');
 
 /* ===== 素材库目录 ===== */
@@ -312,7 +313,7 @@ document.getElementById('legacy').innerHTML = LEGACY.map(([cls,label,desc,src]) 
 <article class="card ${cls}">
   <div class="head"><div class="glyph">${cls === 'm' ? '男' : cls === 'f' ? '女' : '?'}</div><div class="label">${label}</div></div>
   <p class="desc">${desc}</p>
-  <audio controls preload="none" src="${src}"></audio>
+  <audio controls preload="metadata" src="${src}"></audio>
 </article>`).join('');
 
 /* ===== 现场合成 ===== */
@@ -525,7 +526,10 @@ function audioFileDuration(file) {
 let providerCatalog = null;
 let activeProvider = 'minimax';
 const providerStatus = document.getElementById('providerStatus');
-const providerAudio = new Audio();
+const providerAudio = document.getElementById('providerAudio');
+providerAudio.addEventListener('error', () => {
+  providerStatus.textContent = '试听音频加载失败，请重试或更换音色';
+});
 
 async function loadProviderCatalog() {
   try {
@@ -607,9 +611,14 @@ async function previewProviderVoice(provider, voice, button) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    providerAudio.src = `data:audio/wav;base64,${data.audio}`;
-    await providerAudio.play().catch(() => {});
-    providerStatus.textContent = `试听：${provider.name} · ${voice.name}（${data.format || 'wav'}）`;
+    if (!data.url) throw new Error('返回音频地址为空');
+    providerAudio.src = data.url;
+    providerAudio.style.display = 'block';
+    providerAudio.load();
+    providerStatus.textContent = `试听：${provider.name} · ${voice.name}（${data.format || 'wav'}，已加入句首语气词）`;
+    providerAudio.play().catch(() => {
+      providerStatus.textContent = `已生成：${provider.name} · ${voice.name}，点下方播放器试听`;
+    });
   } catch (error) {
     providerStatus.textContent = `试听失败：${error.message}`;
   } finally {
@@ -676,7 +685,7 @@ async function loadClonedVoices() {
       if (item.demo) {
         const audio = document.createElement('audio');
         audio.controls = true;
-        audio.preload = 'none';
+        audio.preload = 'metadata';
         audio.src = item.demo;
         card.appendChild(audio);
       } else {
