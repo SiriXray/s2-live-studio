@@ -240,3 +240,6 @@ body.canvas-mode .canvas-exit{display:block}
 .console-accordion[open] .ca-arrow{color:#b7a8ff;transform:rotate(90deg)}
 .ca-body{padding:0 11px 13px;background:transparent}
 .console-accordion[hidden]{display:none}
+
+/* 防止展开内容被 flex 压缩，保证中控台可滚动查看完整参数 */
+.console-accordion{flex:0 0 auto}
