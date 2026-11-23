@@ -144,7 +144,7 @@ function createStudio(options = {}) {
   const store = options.store || createConfigStore();
   const transport = options.transport || fetch;
   const upstreamRequest = options.upstreamRequest || https.request;
-  const dataDir = options.dataDir || path.join(__dirname, 'data');
+  const dataDir = options.dataDir || process.env.S2_DATA_DIR || path.join(__dirname, 'data');
   const monetLibrary = createMonetLibrary({ file: path.join(dataDir, 'monet-library.json'), transport });
   const interaction = createInteraction({ store, transport, dataDir });
   const initialShowroom = showroom.loadState(dataDir);
@@ -929,7 +929,8 @@ if (require.main === module) {
   const port = Number(portFlag >= 0 ? process.argv[portFlag + 1] : process.env.S2_PORT || 8792);
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('端口须在1024至65535之间');
   const server = createStudio();
-  server.listen(port, '127.0.0.1', () => console.log(`S2 Live Studio: http://localhost:${port}`));
+  const host = process.env.S2_HOST || '127.0.0.1';
+  server.listen(port, host, () => console.log(`S2 Live Studio: http://${host}:${port}`));
   for (const event of ['SIGINT', 'SIGTERM']) process.on(event, () => server.close(() => process.exit(0)));
 }
 
