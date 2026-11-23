@@ -242,6 +242,11 @@ function createStudio(options = {}) {
     if (request.method === 'GET' && pathname === '/api/voice/catalog') {
       return json(response, 200, { providers: voiceCatalog.catalog(store.load()) });
     }
+    if (request.method === 'GET' && pathname === '/api/voice/cloned') {
+      let items = [];
+      try { items = JSON.parse(fs.readFileSync(path.join(dataDir, 'cloned-voices.json'), 'utf8')); } catch { items = []; }
+      return json(response, 200, { items: Array.isArray(items) ? items : [] });
+    }
     if (request.method === 'POST' && pathname === '/api/voice/catalog/preview') {
       const input = await readJson(request, 64 * 1024);
       const result = await voicePreview.preview(store.load(), {

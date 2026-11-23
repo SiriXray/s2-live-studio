@@ -118,6 +118,8 @@ footer a{color:var(--dim)}
 .voice-card .voice-tags{display:flex;gap:4px;flex-wrap:wrap}
 .voice-card .voice-tags span{font-size:9px;padding:3px 5px;border-radius:4px;background:rgba(124,108,255,.1);color:#c7d2ff}
 .voice-card .voice-actions{display:flex;gap:6px;align-items:center}
+.cloned-card audio{width:100%;height:34px;margin-top:2px}
+.cloned-card .cloned-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--muted)}
 .voice-card button{padding:7px 10px;font-size:11px;border-radius:7px}
 .voice-card .not-ready{color:#ffb86b;font-size:10px}
 .provider-config{margin:16px 0;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:rgba(255,255,255,.02)}
@@ -136,6 +138,10 @@ footer a{color:var(--dim)}
     <a class="back" href="/">← 返回工作台</a>
   </div>
   <p class="sub">顶部为 Soul 真声链路实测通过的音色，可直接设为直播音色；其余为素材库参考音色。</p>
+
+  <h2>已克隆音色 <span class="tag" id="clonedCount">5</span></h2>
+  <p class="sub" style="margin-top:-6px">来自 `_cand` 的 5 段参考音频，已在 MiniMax 完成克隆；仅展示已获授权的素材。</p>
+  <div class="grid" id="clonedVoices"></div>
 
   <h2>实测可开播 · Soul 真声</h2>
   <div class="grid" id="proven"></div>
@@ -640,7 +646,55 @@ document.getElementById('saveProviderConfig').onclick = async () => {
   }
 };
 
+async function loadClonedVoices() {
+  const host = document.getElementById('clonedVoices');
+  if (!host) return;
+  try {
+    const res = await fetch('/api/voice/cloned');
+    const data = await res.json();
+    const items = data.items || [];
+    document.getElementById('clonedCount').textContent = String(items.length);
+    host.replaceChildren();
+    for (const item of items) {
+      const card = document.createElement('div');
+      card.className = 'voice-card cloned-card';
+      const title = document.createElement('h3');
+      title.textContent = item.name;
+      const id = document.createElement('div');
+      id.className = 'voice-id';
+      id.textContent = item.voice_id;
+      const tags = document.createElement('div');
+      tags.className = 'voice-tags';
+      for (const text of [item.gender === 'female' ? '女声' : '男声', ...(item.tags || [])]) {
+        const tag = document.createElement('span');
+        tag.textContent = text;
+        tags.appendChild(tag);
+      }
+      const meta = document.createElement('div');
+      meta.className = 'cloned-meta';
+      meta.textContent = `源：${item.source || '—'} · ${item.source_duration_s || '?'}s`;
+      card.append(title, id, tags, meta);
+      if (item.demo) {
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.preload = 'none';
+        audio.src = item.demo;
+        card.appendChild(audio);
+      } else {
+        const note = document.createElement('span');
+        note.className = 'note';
+        note.textContent = '试听音频生成中';
+        card.appendChild(note);
+      }
+      host.appendChild(card);
+    }
+  } catch (error) {
+    host.textContent = `克隆音色加载失败：${error.message}`;
+  }
+}
+
 loadProviderCatalog();
+loadClonedVoices();
 </script>
 </body>
 </html>
