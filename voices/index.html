@@ -2,703 +2,225 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
-<title>S2 Live Studio · 音色试听</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-<link rel="shortcut icon" href="/favicon.ico">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>音色试听 · S2 Live Studio</title>
 <style>
 :root{
-  --fg:#eef1f8; --dim:rgba(238,241,248,.66); --muted:rgba(238,241,248,.45);
-  --panel:rgba(21,22,52,.46); --line:rgba(255,255,255,.14);
-  --brand1:#a855f7; --brand2:#f0509b; --ok:#34d399; --gold:#ffd166;
-  --radius:22px;
+  --bg:#0b0914;--panel:rgba(255,255,255,.055);--panel-strong:rgba(18,15,35,.86);
+  --line:rgba(255,255,255,.10);--fg:#f5f1ff;--muted:#a49abf;--accent:#9b87ff;--accent2:#5b8cff;
 }
-*{box-sizing:border-box;margin:0}
-html{-webkit-text-size-adjust:100%}
-body{
-  min-height:100vh;color:var(--fg);
-  font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
-  background:linear-gradient(160deg,#1b1f4e 0%,#2b1b53 45%,#3c1550 100%);
-  padding:0 20px 80px;position:relative;overflow-x:hidden;
-}
-.blob{position:fixed;border-radius:50%;filter:blur(110px);opacity:.5;z-index:0;pointer-events:none}
-.b1{width:520px;height:520px;background:#7c5cff;top:-160px;left:-120px}
-.b2{width:460px;height:460px;background:#f0509b;top:40%;right:-160px;opacity:.32}
-.b3{width:420px;height:420px;background:#f2b04e;bottom:-160px;left:28%;opacity:.22}
-.wrap{position:relative;z-index:1;max-width:1140px;margin:0 auto}
-.top{display:flex;align-items:center;gap:14px;padding:34px 0 6px}
-.brandmark{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:13px;
-  background:linear-gradient(135deg,var(--brand1),var(--brand2));font-weight:800;font-size:17px;color:#fff;
-  box-shadow:0 6px 20px rgba(168,85,247,.35);text-decoration:none;flex-shrink:0}
-h1{font-size:clamp(24px,3vw,34px);font-weight:700;letter-spacing:.02em}
-.top .back{margin-left:auto;color:var(--dim);font-size:14px;text-decoration:none;border:1px solid var(--line);
-  border-radius:999px;padding:8px 16px;transition:.2s}
-.top .back:hover{color:#fff;border-color:rgba(255,255,255,.35)}
-.sub{color:var(--muted);font-size:14px;margin:6px 0 26px}
-h2{font-size:15px;font-weight:600;letter-spacing:.14em;color:var(--dim);margin:34px 0 14px;display:flex;align-items:center;gap:10px}
-h2::before{content:'';width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,var(--brand1),var(--brand2))}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
-.card{background:var(--panel);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
-  border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:0 8px 32px rgba(10,8,40,.35)}
-.card.proven{border-color:rgba(52,211,153,.35)}
-.head{display:flex;align-items:center;gap:13px;margin-bottom:6px}
-.glyph{width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  font-size:20px;color:#fff;border:2px solid rgba(255,255,255,.55);box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.f .glyph{background:linear-gradient(135deg,#e879a6,#c2579b)}
-.m .glyph{background:linear-gradient(135deg,#7fa7d9,#5d7fbe)}
-.label{font-size:19px;font-weight:600}
-.badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.badge{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 10px;white-space:nowrap}
-.badge.ok{color:var(--ok);border-color:rgba(52,211,153,.4)}
-.badge.gold{color:var(--gold);border-color:rgba(255,209,102,.4)}
-.hint{color:var(--dim);font-size:13.5px;line-height:1.6;margin-bottom:10px}
-.vid{display:flex;align-items:center;gap:8px;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--muted);
-  background:rgba(255,255,255,.05);border-radius:10px;padding:7px 10px;margin-bottom:12px;overflow:hidden}
-.vid span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vid button{flex-shrink:0;background:none;border:none;color:var(--dim);cursor:pointer;font-size:12px;padding:2px 4px}
-.vid button:hover{color:#fff}
-audio{width:100%;height:36px;margin-bottom:12px}
-.actions{display:flex;gap:8px}
-.btn{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--fg);border-radius:12px;
-  padding:9px 0;font-size:14px;cursor:pointer;transition:.2s;font-family:inherit}
-.btn:hover{background:rgba(255,255,255,.12)}
-.btn.primary{background:linear-gradient(135deg,var(--brand1),var(--brand2));border:none;color:#fff;font-weight:600}
-.btn.primary:hover{filter:brightness(1.1)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-/* 现场合成 */
-.synth{display:grid;gap:12px}
-.synth textarea{width:100%;min-height:72px;resize:vertical;background:rgba(255,255,255,.06);border:1px solid var(--line);
-  border-radius:14px;color:var(--fg);padding:12px 14px;font-size:14px;font-family:inherit;line-height:1.6}
-.synth textarea:focus{outline:none;border-color:rgba(168,85,247,.6)}
-.synth .row{display:flex;gap:10px;align-items:center}
-.synth select{flex:1;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--fg);
-  padding:10px 12px;font-size:14px;font-family:inherit}
-.synth select option{background:#241a4e}
-.synth .note{color:var(--muted);font-size:12.5px}
-#synthStatus{color:var(--dim);font-size:13px;min-height:18px}
-/* 音色克隆 */
-.clone-drop{border:1.5px dashed rgba(255,255,255,.28);border-radius:16px;padding:22px 16px;text-align:center;cursor:pointer;transition:.2s;background:rgba(255,255,255,.03)}
-.clone-drop:hover,.clone-drop.dragover{border-color:rgba(168,85,247,.75);background:rgba(168,85,247,.08)}
-.clone-drop-title{font-size:14.5px;font-weight:600}
-.clone-drop-note{color:var(--muted);font-size:12.5px;margin-top:5px}
-.clone-drop.ok{border-color:rgba(52,211,153,.55);border-style:solid;cursor:default}
-.clone-opt{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;white-space:nowrap}
-.clone-opt input{accent-color:var(--brand1)}
-#cloneCard .row{margin-top:0}
-#cloneCard textarea{margin-top:0}
-#cloneResult{margin-top:4px}
-#cloneStatus{min-height:18px}
-/* 目录折叠 */
-details.catalog summary{cursor:pointer;color:var(--dim);font-size:14px;border:1px solid var(--line);border-radius:14px;
-  padding:12px 18px;background:var(--panel);list-style:none;display:flex;align-items:center;gap:10px;transition:.2s}
-details.catalog summary:hover{color:#fff}
-details.catalog summary::before{content:'▸';transition:.2s}
-details.catalog[open] summary::before{content:'▾'}
-details.catalog[open] summary{margin-bottom:16px}
-.grid .card .desc{color:var(--dim);font-size:13px;line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-footer{margin-top:44px;color:var(--muted);font-size:12.5px;text-align:center}
-footer a{color:var(--dim)}
-.toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
-  background:rgba(20,16,50,.92);border:1px solid var(--line);color:#fff;font-size:13.5px;border-radius:999px;
-  padding:10px 22px;transition:.25s;z-index:9}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-/* 实时 TTS 音色库 */
-.provider-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
-.provider-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:4px 0}
-.provider-tab{padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--muted);cursor:pointer;font-size:13px}
-.provider-tab.active{border-color:rgba(150,130,255,.75);background:rgba(124,108,255,.18);color:#fff}
-.provider-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:3px 6px}
-.provider-badge i{width:6px;height:6px;border-radius:50%;background:var(--provider-color,#8b7cff)}
-.voice-card{padding:16px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015));display:grid;gap:8px}
-.voice-card h3{font-size:15px;margin:0}
-.voice-card .voice-id{font-family:var(--mono,monospace);font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.voice-card .voice-tags{display:flex;gap:4px;flex-wrap:wrap}
-.voice-card .voice-tags span{font-size:9px;padding:3px 5px;border-radius:4px;background:rgba(124,108,255,.1);color:#c7d2ff}
-.voice-card .voice-actions{display:flex;gap:6px;align-items:center}
-.cloned-card audio{width:100%;height:34px;margin-top:2px}
-.voice-card button{padding:7px 10px;font-size:11px;border-radius:7px}
-.voice-card .not-ready{color:#ffb86b;font-size:10px}
-.provider-config{margin:16px 0;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:rgba(255,255,255,.02)}
-.provider-config summary{cursor:pointer;color:var(--muted);font-size:12px}
-.provider-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
-.provider-config-grid label{display:grid;gap:4px;font-size:10px;color:var(--muted)}
-.provider-config-grid input{padding:8px;border:1px solid var(--line);border-radius:7px;background:rgba(255,255,255,.06);color:var(--fg);font-size:11px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;background:
+  radial-gradient(900px 540px at 8% -10%,rgba(124,88,255,.34),transparent 60%),
+  radial-gradient(760px 460px at 96% 8%,rgba(214,92,255,.16),transparent 60%),
+  radial-gradient(900px 700px at 52% 118%,rgba(54,90,255,.18),transparent 62%),
+  var(--bg);color:var(--fg);font-family:Inter,"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+a{color:inherit;text-decoration:none}
+.wrap{width:min(1320px,calc(100% - 48px));margin:0 auto;padding:26px 0 60px}
+.top{display:flex;align-items:center;gap:14px;padding:4px 0 18px}
+.brand{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-weight:800;background:linear-gradient(135deg,#a78bfa,#6d8cff);box-shadow:0 10px 30px rgba(124,108,255,.35)}
+h1{font-size:22px;margin:0;letter-spacing:.02em}
+.back{margin-left:auto;padding:9px 14px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px}
+.back:hover{color:#fff;border-color:rgba(155,135,255,.6)}
+.lead{color:var(--muted);font-size:13px;line-height:1.7;margin:0 0 18px}
+.model-tabs{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow:auto;padding:12px 0;margin:0 0 8px;background:linear-gradient(180deg,rgba(11,9,20,.96),rgba(11,9,20,.72),transparent);backdrop-filter:blur(16px);scrollbar-width:none}
+.model-tabs::-webkit-scrollbar{display:none}
+.model-tab{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04);color:var(--muted);font-size:12px;cursor:pointer}
+.model-tab i{width:7px;height:7px;border-radius:50%;background:var(--dot,#9b87ff);box-shadow:0 0 12px var(--dot,#9b87ff)}
+.model-tab b{font-weight:500;color:var(--muted);font-size:10px}
+.model-tab.active{color:#fff;border-color:rgba(155,135,255,.7);background:rgba(124,108,255,.18)}
+.model-tab.active b{color:#cfc5ff}
+.model-section{padding:26px 0 8px;scroll-margin-top:78px}
+.section-head{display:flex;align-items:flex-end;gap:12px;margin:0 0 14px}
+.section-head h2{font-size:18px;margin:0;display:flex;align-items:center;gap:9px}
+.section-head h2 i{width:8px;height:8px;border-radius:50%;background:var(--dot,#9b87ff);box-shadow:0 0 14px var(--dot,#9b87ff)}
+.section-head p{margin:0 0 2px;color:var(--muted);font-size:11px}
+.section-head .count{margin-left:auto;color:var(--muted);font-size:11px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.voice-card{padding:16px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018));display:flex;flex-direction:column;gap:8px;min-height:150px}
+.voice-card:hover{border-color:rgba(155,135,255,.35);background:linear-gradient(145deg,rgba(255,255,255,.085),rgba(255,255,255,.025))}
+.voice-top{display:flex;align-items:flex-start;gap:10px}
+.avatar{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:12px;color:#dfe6ff;background:linear-gradient(135deg,rgba(124,108,255,.32),rgba(91,140,255,.16));flex:0 0 34px}
+.voice-name{font-size:15px;font-weight:600;line-height:1.2}
+.voice-id{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:9.5px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:250px}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.tag{font-size:9px;line-height:1;padding:4px 6px;border-radius:5px;background:rgba(124,108,255,.10);border:1px solid rgba(124,108,255,.14);color:#c7d2ff;white-space:nowrap}
+.tag.clone{background:rgba(255,138,92,.10);border-color:rgba(255,138,92,.2);color:#ffc2a8}
+.tag.off{background:rgba(255,184,107,.08);border-color:rgba(255,184,107,.2);color:#ffcf8a}
+.voice-card audio{width:100%;height:34px;margin-top:auto;border-radius:8px}
+.voice-empty{font-size:11px;color:#ffcf8a;margin-top:auto;padding:8px 0}
+.loading{color:var(--muted);padding:40px 0;text-align:center;font-size:13px}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);color:var(--muted);font-size:11px;display:flex;gap:12px;flex-wrap:wrap}
+@media(max-width:980px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{width:min(100% - 28px,900px)}}
+@media(max-width:620px){.grid{grid-template-columns:1fr}h1{font-size:19px}.lead{font-size:12px}.model-tab{padding:8px 11px}}
 </style>
 </head>
 <body>
-<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
 <div class="wrap">
   <div class="top">
-    <a class="brandmark" href="/">S2</a>
+    <a class="brand" href="/">S2</a>
     <h1>音色试听</h1>
     <a class="back" href="/">← 返回工作台</a>
   </div>
-  <h2>已克隆音色 <span class="tag" id="clonedCount">4</span></h2>
-  <div class="grid" id="clonedVoices"></div>
-
-  <h2>实测可开播 · Soul 真声</h2>
-  <div class="grid" id="proven"></div>
-
-  <h2>MiniMax 回落 · 克隆候选</h2>
-  <p class="sub" style="margin-top:-6px">Soul 链路失败时自动回落到 MiniMax；以下 4 条候选为克隆音色池，可作回落音色的备选参考。</p>
-  <div class="grid" id="minimax"></div>
-
-  <h2>实时 TTS 音色库</h2>
-  <p class="sub" style="margin-top:-6px">豆包 / MiniMax / Soul / 科大讯飞，按供应商分组；点“试听”直接调对应接口。</p>
-  <div class="provider-tabs" id="providerTabs"></div>
-  <div class="grid" id="providerVoices"></div>
-  <p id="providerStatus" class="note"></p>
-  <audio id="providerAudio" controls preload="metadata" style="width:100%;margin:6px 0 12px;display:none"></audio>
-  <details class="provider-config">
-    <summary>配置豆包 / 讯飞 Key（MiniMax / Soul 使用现有连接设置）</summary>
-    <div class="provider-config-grid">
-      <label>豆包 App ID<input id="doubaoAppId" placeholder="火山引擎 App ID"></label>
-      <label>豆包 Access Token<input id="doubaoToken" type="password" placeholder="Access Token"></label>
-      <label>豆包 Cluster<input id="doubaoCluster" placeholder="volcano_tts"></label>
-      <label>讯飞 APPID<input id="iflytekAppId" placeholder="讯飞 APPID"></label>
-      <label>讯飞 APIKey<input id="iflytekKey" type="password" placeholder="APIKey"></label>
-      <label>讯飞 APISecret<input id="iflytekSecret" type="password" placeholder="APISecret"></label>
-    </div>
-    <div class="row"><button class="btn primary" id="saveProviderConfig">保存供应商配置</button><span id="providerConfigStatus" class="note"></span></div>
-  </details>
-
-  <h2>现场合成</h2>
-  <div class="card synth">
-    <textarea id="synthText" maxlength="160">大家好，欢迎来到直播间，这是我的声音，喜欢就点点关注。</textarea>
-    <div class="row">
-      <select id="synthVoice"></select>
-      <button class="btn primary" id="synthBtn" style="flex:0 0 auto;padding:10px 26px">合成试听</button>
-    </div>
-    <p class="note">走直播同一条合成链路（Soul 优先，失败自动回落 MiniMax），每次约几十字消耗。</p>
-    <p id="synthStatus"></p>
-    <audio id="synthAudio" controls preload="none" style="display:none"></audio>
-  </div>
-
-  <h2>音色克隆</h2>
-  <p class="sub" style="margin-top:-6px">上传一段 10 秒以上的清晰人声（mp3 / wav / m4a，≤20MB），选择提供商完成克隆，即时试听。参考音频建议：单人、无背景音乐、停顿不超过 2 秒。</p>
-  <div class="card synth" id="cloneCard">
-    <div class="clone-drop" id="cloneDrop">
-      <div class="clone-drop-inner" id="cloneDropInner">
-        <div class="clone-drop-title" id="cloneDropTitle">点击或拖入参考音频</div>
-        <div class="clone-drop-note" id="cloneDropNote">mp3 / wav / m4a · 10s+ 清晰人声 · ≤20MB</div>
-      </div>
-      <input type="file" id="cloneFile" accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/mp4" hidden>
-      <audio id="cloneSrcAudio" controls preload="none" style="display:none;margin-top:10px"></audio>
-    </div>
-    <div class="row" style="flex-wrap:wrap">
-      <select id="cloneProvider" style="flex:1;min-width:140px">
-        <option value="soul">Soul（Loxi Speech · 带试听）</option>
-        <option value="minimax" selected>MiniMax（speech-2.8 · 推荐）</option>
-        <option value="qwen">Qwen（阿里百炼 · qwen-audio-3.1-tts-flash）</option>
-      </select>
-      <input id="cloneVoiceId" placeholder="自定义 voice_id（MiniMax 必填，Qwen 作为前缀）" style="flex:1.4;min-width:200px;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--fg);padding:10px 12px;font-size:14px;font-family:inherit">
-    </div>
-    <textarea id="cloneText" maxlength="200" style="min-height:52px" placeholder="克隆试听文本（可选，默认：大家好，这是我的克隆声音，欢迎来到直播间。）"></textarea>
-    <div class="row" style="flex-wrap:wrap;gap:8px">
-      <label class="clone-opt"><input type="checkbox" id="cloneNoise"> 降噪</label>
-      <label class="clone-opt"><input type="checkbox" id="cloneDereverb"> 去混响</label>
-      <label class="clone-opt"><input type="checkbox" id="cloneVolume"> 音量归一化</label>
-      <span class="note" id="cloneHint" style="flex:1;min-width:180px"></span>
-    </div>
-    <div class="row">
-      <button class="btn primary" id="cloneBtn" style="flex:0 0 auto;padding:10px 26px">开始克隆</button>
-      <p id="cloneStatus" style="flex:1"></p>
-    </div>
-    <div id="cloneResult" hidden>
-      <div class="vid"><span id="cloneResultId"></span><button id="cloneCopyBtn">复制</button></div>
-      <audio id="cloneDemoAudio" controls preload="none" style="margin-bottom:6px"></audio>
-    </div>
-  </div>
-
-  <h2>素材库参考音色</h2>
-  <details class="catalog" id="catalog">
-    <summary>展开 Vidu 素材库试听目录（25 条）</summary>
-    <div class="grid" id="legacy"></div>
-  </details>
-
-  <footer>S2 Live Studio · 音色档案由 lib/voices.js 统一管理，切换人设时 Soul 与 MiniMax 两侧同步生效</footer>
+  <p class="lead">按模型分组。点顶部标签跳到 MiniMax / Soul，再点标签跳到下一个模型；每条音色直接带上播放器。</p>
+  <nav class="model-tabs" id="modelTabs" aria-label="模型切换"></nav>
+  <main id="models"><div class="loading">正在加载音色…</div></main>
+  <footer><span>S2 Live Studio</span><span>按模型展示 · 克隆音色归入 MiniMax</span></footer>
 </div>
-<div class="toast" id="toast"></div>
-
-<script type="module">
-import { decodePcm, pcmWav } from '/audio.js';
-
-/* ===== 实测音色（与 lib/voices.js 档案一致） ===== */
-const PROVEN = [
-  { id:'female_lively_d', cls:'f', label:'活泼小榆', persona:'活泼亲切-生活',
-    hint:'明快有活力、生活烟火气，适合生活分享与轻松唠嗑',
-    soul:'LOXI_F_Y_ZH_Lively-Natural_Dialog_3abe', seconds:'8.2s', src:'soul/soul_lively.wav' },
-  { id:'female_tender_e', cls:'f', label:'温柔书瑶', persona:'温柔陪伴-电台',
-    hint:'柔和体贴、深夜电台感，适合陪伴倾诉与慢节奏直播',
-    soul:'LOXI_F_Y_ZH_Tender-Natural_Dialog_d6c6', seconds:'8.6s', src:'soul/soul_tender.wav' },
-  { id:'male_velvety_f', cls:'m', label:'磁性砚川', persona:'磁性沉稳-音乐',
-    hint:'低磁性沉稳、音乐电台感，适合深夜音乐与叙事场景',
-    soul:'LOXI_M_A_ZH_Velvety-Mature_Dialog_a7c0', seconds:'7.7s', src:'soul/soul_velvety.wav' },
-  { id:'female_sweet_b', cls:'f', label:'甜美元气（克隆音源）', persona:'甜美元气-娱乐',
-    hint:'克隆女声，音色亮、情绪高，适合娱乐互动与带货',
-    soul:'s2_liuyifei_v030_11', seconds:'4.5s', src:'soul/soul_clone_female.wav' },
-  { id:'female_scholar_g', cls:'f', label:'知性书禾', persona:'知识分享 · 电台',
-    hint:'知性电台感、条理清晰，适合知识分享与书评荐读',
-    soul:'LOXI_F_Y_ZH_Tender-Natural_Podcast_9dfb', seconds:'8.8s', src:'soul/soul_shuhe_podcast.wav' },
-  { id:'female_bright_h', cls:'f', label:'知性小夏', persona:'观点输出 · 访谈',
-    hint:'明快中带知性、播客叙事感，适合观点输出与轻松访谈',
-    soul:'LOXI_F_Y_ZH_Lively-Natural_Podcast_1459', seconds:'6.6s', src:'soul/soul_xiaoxia_podcast.wav' },
-  { id:'female_cheery_i', cls:'f', label:'开朗映岚', persona:'暖场互动',
-    hint:'开朗热情、互动感强，适合暖场唠嗑与活跃气氛',
-    soul:'LOXI_F_Y_ZH_Lively-Natural_Dialog_7ea6', seconds:'9.6s', src:'soul/soul_yinglan_dialog.wav' },
+<script>
+const STATIC_SOUL = [
+  { id:'female_lively_d', name:'活泼小榆', voice:'LOXI_F_Y_ZH_Lively-Natural_Dialog_3abe', gender:'female', tags:['实测','对话'], audio:'/voices/soul/soul_lively.wav' },
+  { id:'female_tender_e', name:'温柔书瑶', voice:'LOXI_F_Y_ZH_Tender-Natural_Dialog_d6c6', gender:'female', tags:['实测','温柔'], audio:'/voices/soul/soul_tender.wav' },
+  { id:'male_velvety_f', name:'磁性砚川', voice:'LOXI_M_A_ZH_Velvety-Mature_Dialog_a7c0', gender:'male', tags:['实测','磁性'], audio:'/voices/soul/soul_velvety.wav' },
+  { id:'female_clone', name:'女声克隆', voice:'s2_liuyifei_v030_11', gender:'female', tags:['实测','克隆'], audio:'/voices/soul/soul_clone_female.wav' },
+  { id:'female_scholar_g', name:'知性书禾', voice:'LOXI_F_Y_ZH_Tender-Natural_Podcast_9dfb', gender:'female', tags:['实测','播客'], audio:'/voices/soul/soul_shuhe_podcast.wav' },
+  { id:'female_bright_h', name:'知性小夏', voice:'LOXI_F_Y_ZH_Lively-Natural_Podcast_1459', gender:'female', tags:['实测','播客'], audio:'/voices/soul/soul_xiaoxia_podcast.wav' },
+  { id:'female_cheery_i', name:'开朗映岚', voice:'LOXI_F_Y_ZH_Lively-Natural_Dialog_7ea6', gender:'female', tags:['实测','热情'], audio:'/voices/soul/soul_yinglan_dialog.wav' },
 ];
-
-const proven = document.getElementById('proven');
-proven.innerHTML = PROVEN.map(v => `
-<article class="card ${v.cls} proven">
-  <div class="head"><div class="glyph">${v.cls === 'm' ? '男' : '女'}</div><div class="label">${v.label}</div></div>
-  <div class="badges"><span class="badge ok">✓ 实测 ${v.seconds}</span><span class="badge">人设 · ${v.persona}</span></div>
-  <p class="hint">${v.hint}</p>
-  <div class="vid"><span title="${v.soul}">${v.soul}</span><button data-copy="${v.soul}">复制</button></div>
-  <audio controls preload="metadata" src="${v.src}"></audio>
-  <div class="actions"><button class="btn primary" data-use="${v.id}" data-name="${v.label}">设为当前音色</button></div>
-</article>`).join('');
-
-/* ===== MiniMax 回落候选（2026-11-03 克隆音色池，Soul 失败时自动回落） ===== */
-const MINIMAX = [
-  { id:'voice_zh_3535668268758896', cls:'m', label:'候选 A', tag:'男声 · 157Hz', src:'minimax/voice_zh_3535668268758896.mp3' },
-  { id:'clone_1793668736_4d87a4f2', cls:'m', label:'候选 B', tag:'男声 · 151Hz', src:'minimax/clone_1793668736_4d87a4f2.mp3' },
-  { id:'probe_tts_01', cls:'f', label:'候选 C', tag:'女声 · 240Hz', src:'minimax/probe_tts_01.mp3' },
-  { id:'voice_zh_3536631501522332', cls:'m', label:'候选 D', tag:'男声 · 117Hz（最低沉）', src:'minimax/voice_zh_3536631501522332.mp3' },
+const STATIC_MINIMAX_LEGACY = [
+  { name:'候选 A', voice:'voice_zh_3535668268758896', gender:'male', tags:['克隆候选','男声'], audio:'/voices/minimax/voice_zh_3535668268758896.mp3' },
+  { name:'候选 B', voice:'clone_1793668736_4d87a4f2', gender:'male', tags:['克隆候选','男声'], audio:'/voices/minimax/clone_1793668736_4d87a4f2.mp3' },
+  { name:'候选 C', voice:'probe_tts_01', gender:'female', tags:['克隆候选','女声'], audio:'/voices/minimax/probe_tts_01.mp3' },
+  { name:'候选 D', voice:'voice_zh_3536631501522332', gender:'male', tags:['克隆候选','低音'], audio:'/voices/minimax/voice_zh_3536631501522332.mp3' },
 ];
-document.getElementById('minimax').innerHTML = MINIMAX.map(v => `
-<article class="card ${v.cls}">
-  <div class="head"><div class="glyph">${v.cls === 'm' ? '男' : '女'}</div><div class="label">${v.label}</div></div>
-  <div class="badges"><span class="badge">${v.tag}</span><span class="badge">speech-2.8-turbo 实合成</span></div>
-  <div class="vid"><span title="${v.id}">${v.id}</span><button data-copy="${v.id}">复制</button></div>
-  <audio controls preload="metadata" src="${v.src}"></audio>
-</article>`).join('');
-
-/* ===== 素材库目录 ===== */
-const LEGACY = [
- ["f","古风女","适合古风/仙侠类虚构女主播，可饰演温柔知性的旁白或温婉女主角色","auditions/V001_1.2x.wav"],
- ["m","温润男","适合虚构浪漫剧或情感类直播中的深情男主声线，也可作为沉稳型有声书旁白","references/se4a5157a0290.wav"],
- ["f","元气少女","适合虚构活泼型导游、元气少女主播、虚拟偶像或欢快型知识科普角色","auditions/V003_1.2x.wav"],
- ["m","沉稳旁白","适合虚构沉稳型男主播、纪录片旁白、知识类电台主持或温和型AI助手角色","auditions/V004_1.2x.wav"],
- ["f","仙气女","适合仙侠/古风类虚构主播中的精灵、仙子、引路灵体等空灵角色；或ASMR向温柔陪伴型人设","auditions/V005_1.2x.wav"],
- ["f","娴雅女","适合知识分享型、文化导览型、温柔知性姐姐类虚构主播；亦可适配古风/现代通用旁白","auditions/V006_1.2x.wav"],
- ["f","邻家少女","适合元气少女、活泼邻家、游戏解说、年轻化虚拟偶像等虚构主播方向","auditions/V007_1.2x.wav"],
- ["f","御姐电台","适合治愈系、深夜电台、古风吟诵、温柔陪伴型虚构主播","auditions/V008_1.2x.wav"],
- ["f","萌音女","适合二次元少女导览、儿童向虚拟主播、或需要高辨识度萌系声线的场景","auditions/V009_1.2x.wav"],
- ["m","笃定男","适合沉稳型知识主播、纪录片旁白、高端品牌虚拟代言人、成熟男性导览角色","auditions/V010_1.2x.wav"],
- ["m","活力男","适合年轻活力型男主播、旅行Vlog旁白、游戏解说、轻快知识分享类虚拟角色","auditions/V011_1.2x.wav"],
- ["m","青涩男","适合成熟稳重型主播、深夜电台、高端访谈节目、权威感虚拟导师角色","auditions/V012_1.2x.wav"],
- ["f","利落女","适合知性温柔型文旅主播、知识类女声旁白、陪伴感强的虚拟导览角色","auditions/V013_1.2x.wav"],
- ["m","利落男","适合沉稳可靠型男主播、纪录片旁白、文化类虚拟讲解员","auditions/V014_1.2x.wav"],
- ["f","甜美女","若保留混响可适配仙侠/古风虚拟角色、梦境旁白；干声复刻需谨慎评估","auditions/V015_1.2x.wav"],
- ["f","知性女","适合神秘感/空灵型虚拟角色、ASMR向旁白；作为干声复刻素材质量不足","auditions/V016_1.2x.wav"],
- ["f","温婉女","古风/仙侠类虚构女主播，可饰演温柔知性的旁白或温婉女主角色","auditions/V017_1.2x.wav"],
- ["f","端庄女","古风/权谋类虚构女主播，可饰演端庄大气的女官或旁白角色","auditions/V018_1.2x.wav"],
- ["m","硬汉男","玄幻/武侠类虚构男主播，可饰演霸气反派或硬汉型角色","auditions/V019_1.2x.wav"],
- ["m","清朗男","适合虚构知识类或情感类男主播，沉稳大气型，可做读书分享或深夜电台风格","auditions/V020_1.2x.wav"],
- ["m","文艺男","适合虚构文学类深夜电台主播、古风/文艺向旁白角色","auditions/V027_1.2x.wav"],
- ["x","御姐候选","利落的直播主持人","references/s2213ebf5cd94.wav"],
- ["f","访谈女","适合虚构访谈类主播、知性姐姐型角色、播客对谈嘉宾","auditions/V030_1.1x.wav"],
- ["m","解说男","适合生活类或知识类虚构主播，如影视解说、幕后花絮讲述、轻松对谈类角色","auditions/V034_1.2x.wav"],
- ["m","侠气男","适合虚构武侠/历史类有声剧中的反派或挑战者角色，语气硬朗带压迫感","auditions/V061_1.2x.wav"],
+const SOUL_EXTRA = [
+  { name:'温柔书瑶 · 官方预置', voice:'LOXI_F_Y_ZH_Tender-Natural_Dialog_d6c6', gender:'female', tags:['官方预置'] },
+  { name:'磁性砚川 · 官方预置', voice:'LOXI_M_A_ZH_Velvety-Mature_Dialog_a7c0', gender:'male', tags:['官方预置'] },
+  { name:'知性书禾 · 官方预置', voice:'LOXI_F_Y_ZH_Tender-Natural_Podcast_9dfb', gender:'female', tags:['官方预置'] },
+  { name:'知性小夏 · 官方预置', voice:'LOXI_F_Y_ZH_Lively-Natural_Podcast_1459', gender:'female', tags:['官方预置'] },
+  { name:'开朗映岚 · 官方预置', voice:'LOXI_F_Y_ZH_Lively-Natural_Dialog_7ea6', gender:'female', tags:['官方预置'] },
 ];
-document.getElementById('legacy').innerHTML = LEGACY.map(([cls,label,desc,src]) => `
-<article class="card ${cls}">
-  <div class="head"><div class="glyph">${cls === 'm' ? '男' : cls === 'f' ? '女' : '?'}</div><div class="label">${label}</div></div>
-  <p class="desc">${desc}</p>
-  <audio controls preload="metadata" src="${src}"></audio>
-</article>`).join('');
+const state = { models: [], byId: {} };
+const modelTabs = document.getElementById('modelTabs');
+const root = document.getElementById('models');
 
-/* ===== 现场合成 ===== */
-const synthVoice = document.getElementById('synthVoice');
-const synthText = document.getElementById('synthText');
-const synthBtn = document.getElementById('synthBtn');
-const synthStatus = document.getElementById('synthStatus');
-const synthAudio = document.getElementById('synthAudio');
-
-async function loadVoices() {
-  try {
-    const res = await fetch('/api/config');
-    const config = await res.json();
-    const voices = config.voices || [];
-    synthVoice.innerHTML = voices.map(v =>
-      `<option value="${v.id}"${v.id === config.active_voice ? ' selected' : ''}>${v.name}</option>`).join('');
-  } catch { synthVoice.innerHTML = '<option value="">加载失败</option>'; }
+function tagClass(text) {
+  if (text.includes('克隆')) return 'tag clone';
+  if (text.includes('未配置')) return 'tag off';
+  return 'tag';
 }
-loadVoices();
-
-function toast(text) {
-  const el = document.getElementById('toast');
-  el.textContent = text; el.classList.add('show');
-  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2200);
-}
-
-async function post(url, body) {
-  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `请求失败（${res.status}）`);
-  return data;
-}
-
-proven.addEventListener('click', async event => {
-  const copy = event.target.closest('[data-copy]');
-  if (copy) {
-    try { await navigator.clipboard.writeText(copy.dataset.copy); toast('voice_id 已复制'); }
-    catch { toast('复制失败，请手动选择文本'); }
-    return;
+function cardFor(model, voice) {
+  const article = document.createElement('article');
+  article.className = 'voice-card';
+  const top = document.createElement('div');
+  top.className = 'voice-top';
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = voice.gender === 'male' ? '男' : voice.gender === 'female' ? '女' : '声';
+  const text = document.createElement('div');
+  const name = document.createElement('div');
+  name.className = 'voice-name';
+  name.textContent = voice.name;
+  const id = document.createElement('div');
+  id.className = 'voice-id';
+  id.textContent = voice.voice;
+  text.append(name, id);
+  top.append(avatar, text);
+  const tags = document.createElement('div');
+  tags.className = 'tags';
+  for (const text of (voice.tags || []).slice(0, 3)) {
+    const tag = document.createElement('span');
+    tag.className = tagClass(text);
+    tag.textContent = text;
+    tags.appendChild(tag);
   }
-  const use = event.target.closest('[data-use]');
-  if (use) {
-    use.disabled = true;
-    try {
-      await post('/api/interaction/config', { voice_id: use.dataset.use });
-      toast(`已切换：${use.dataset.name}`);
-      [...synthVoice.options].forEach(o => { if (o.value === use.dataset.use) synthVoice.value = o.value; });
-    } catch (error) { toast(error.message); }
-    use.disabled = false;
-  }
-});
-
-synthBtn.onclick = async () => {
-  const text = synthText.value.trim();
-  if (!text || !synthVoice.value) { toast('请填写文本并选择音色'); return; }
-  synthBtn.disabled = true;
-  synthStatus.textContent = '合成中…（Soul 优先，失败自动回落 MiniMax）';
-  try {
-    const result = await post('/api/voice/preview', { voice_id: synthVoice.value, text });
-    if (!result.audio) throw new Error(result.error || '未返回音频');
-    synthAudio.src = URL.createObjectURL(pcmWav(decodePcm(result.audio)));
-    synthAudio.style.display = '';
-    synthAudio.play().catch(() => {});
-    synthStatus.textContent = `完成 · 引擎 ${result.provider || '未知'} · ${(result.text || '').slice(0, 24)}…`;
-  } catch (error) {
-    synthStatus.textContent = `失败：${error.message}`;
-  }
-  synthBtn.disabled = false;
-};
-
-/* ===== 音色克隆 ===== */
-const cloneDrop = document.getElementById('cloneDrop');
-const cloneFile = document.getElementById('cloneFile');
-const cloneSrcAudio = document.getElementById('cloneSrcAudio');
-const cloneProvider = document.getElementById('cloneProvider');
-const cloneBtn = document.getElementById('cloneBtn');
-const cloneStatus = document.getElementById('cloneStatus');
-const cloneResult = document.getElementById('cloneResult');
-const cloneResultId = document.getElementById('cloneResultId');
-const cloneDemoAudio = document.getElementById('cloneDemoAudio');
-const cloneHint = document.getElementById('cloneHint');
-let cloneBlob = null;
-const cloneVoiceInput = document.getElementById('cloneVoiceId');
-
-function newCloneVoiceId() {
-  return `s2clone_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-}
-function ensureCloneVoiceId() {
-  if (cloneProvider.value === 'minimax' && !cloneVoiceInput.value.trim()) {
-    cloneVoiceInput.value = newCloneVoiceId();
-  }
-}
-
-const PROVIDER_HINT = {
-  soul: 'Soul 克隆槽位上限 3 条，满了需在 Loxinity 控制台删除；克隆后自动返回试听音频。',
-  minimax: '需自定义 voice_id（字母数字下划线）；克隆完成自动用该音色合成一段试听。',
-  qwen: 'voice_id 作为前缀（仅小写字母数字，≤10 字符）由百炼生成完整 ID；创建后需部署约 10-60 秒。',
-};
-function syncCloneHint() { cloneHint.textContent = PROVIDER_HINT[cloneProvider.value] || ''; }
-cloneProvider.onchange = () => { syncCloneHint(); ensureCloneVoiceId(); };
-syncCloneHint();
-ensureCloneVoiceId();
-
-function setCloneFile(file) {
-  if (!file) return;
-  const ext = (file.name.split('.').pop() || '').toLowerCase();
-  if (!['mp3', 'wav', 'm4a'].includes(ext)) { toast('仅支持 mp3 / wav / m4a'); return; }
-  if (file.size > 20 * 1024 * 1024) { toast('音频超过 20MB 上限'); return; }
-  if (file.size < 10 * 1024) { toast('音频太小，建议 10 秒以上清晰人声'); return; }
-  cloneBlob = file;
-  document.getElementById('cloneDropTitle').textContent = `已选择：${file.name}`;
-  document.getElementById('cloneDropNote').textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB · ${ext.toUpperCase()}`;
-  cloneDrop.classList.add('ok');
-  cloneSrcAudio.src = URL.createObjectURL(file);
-  cloneSrcAudio.style.display = '';
-}
-cloneDrop.onclick = () => { if (!cloneDrop.classList.contains('ok')) cloneFile.click(); };
-cloneFile.onchange = () => setCloneFile(cloneFile.files[0]);
-cloneDrop.addEventListener('dragover', event => { event.preventDefault(); cloneDrop.classList.add('dragover'); });
-cloneDrop.addEventListener('dragleave', () => cloneDrop.classList.remove('dragover'));
-cloneDrop.addEventListener('drop', event => {
-  event.preventDefault();
-  cloneDrop.classList.remove('dragover');
-  setCloneFile(event.dataTransfer.files[0]);
-});
-
-document.getElementById('cloneCopyBtn').onclick = async () => {
-  try { await navigator.clipboard.writeText(cloneResultId.textContent); toast('voice_id 已复制'); }
-  catch { toast('复制失败，请手动选择文本'); }
-};
-
-cloneBtn.onclick = async () => {
-  if (!cloneBlob) { toast('请先上传参考音频'); return; }
-  const provider = cloneProvider.value;
-  let voiceId = cloneVoiceInput.value.trim();
-  if (provider === 'minimax' && !voiceId) {
-    voiceId = newCloneVoiceId();
-    cloneVoiceInput.value = voiceId;
-  }
-  if (provider === 'minimax' && !/^[a-zA-Z0-9_-]{1,64}$/.test(voiceId)) {
-    toast('MiniMax voice_id 只能使用字母、数字、下划线、短横线（≤64 字符）');
-    return;
-  }
-  // MiniMax / Soul 都要求至少 10 秒参考音频，前端先拦一次，避免上传后才失败
-  if (provider !== 'qwen') {
-    const duration = await audioFileDuration(cloneBlob);
-    if (duration && duration < 10) {
-      cloneStatus.textContent = `失败：参考音频只有 ${duration.toFixed(1)} 秒，MiniMax/Soul 要求至少 10 秒`;
-      toast(`参考音频太短（${duration.toFixed(1)}s），请换 10 秒以上`);
-      return;
-    }
-  }
-  cloneBtn.disabled = true;
-  cloneResult.hidden = true;
-  cloneStatus.textContent = provider === 'qwen' ? '克隆中…（Qwen 需部署音色，约 10-60 秒）' : `克隆中…（${provider}，约 10-60 秒）`;
-  const form = new FormData();
-  form.append('provider', provider);
-  if (voiceId) form.append('voice_id', voiceId);
-  const text = document.getElementById('cloneText').value.trim();
-  if (text) form.append('text', text);
-  if (document.getElementById('cloneNoise').checked) form.append('noise_reduction', 'true');
-  if (document.getElementById('cloneDereverb').checked) form.append('dereverberation', 'true');
-  if (document.getElementById('cloneVolume').checked) form.append('volume_normalization', 'true');
-  form.append('file', cloneBlob, cloneBlob.name);
-  try {
-    const res = await fetch('/api/voice/clone', { method: 'POST', body: form });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `请求失败（${res.status}）`);
-    cloneResultId.textContent = data.voice_id || '';
-    cloneResult.hidden = false;
-    if (data.demo?.audio) {
-      // demo 三种形态：wav base64（Qwen/Soul）、pcm base64（MiniMax，需封 wav 头）、m4a base64（Soul url 代下载）
-      const bytes = Uint8Array.from(atob(data.demo.audio), ch => ch.charCodeAt(0));
-      const isWav = bytes.length > 12 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46;
-      const isMp4 = bytes.length > 12 && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70;
-      const blob = isWav ? new Blob([bytes], { type: 'audio/wav' })
-        : isMp4 ? new Blob([bytes], { type: 'audio/mp4' })
-        : pcmWav(decodePcm(data.demo.audio));
-      cloneDemoAudio.src = URL.createObjectURL(blob);
-      cloneDemoAudio.style.display = '';
-      cloneDemoAudio.play().catch(() => {});
-    } else {
-      cloneDemoAudio.style.display = 'none';
-    }
-    cloneStatus.textContent = `克隆成功（${provider}）${data.demo?.audio ? ' · 试听已生成' : ' · 音色已创建，可在现场合成中验证'}`;
-    toast('克隆成功');
-    // 同一个 voice_id 不能重复克隆；成功后自动换一个新的，避免下一次点就报“已存在”
-    if (provider === 'minimax' && voiceId === cloneVoiceInput.value.trim()) {
-      cloneVoiceInput.value = newCloneVoiceId();
-    }
-  } catch (error) {
-    cloneStatus.textContent = `失败：${error.message}`;
-  }
-  cloneBtn.disabled = false;
-};
-
-function audioFileDuration(file) {
-  return new Promise(resolve => {
-    const url = URL.createObjectURL(file);
-    const audio = new Audio();
-    const done = value => { URL.revokeObjectURL(url); resolve(value); };
+  article.append(top, tags);
+  if (voice.audio) {
+    const audio = document.createElement('audio');
+    audio.controls = true;
     audio.preload = 'metadata';
-    audio.onloadedmetadata = () => done(Number.isFinite(audio.duration) ? audio.duration : 0);
-    audio.onerror = () => done(0);
-    audio.src = url;
-    setTimeout(() => done(0), 3000);
+    audio.src = voice.audio;
+    audio.addEventListener('error', () => {
+      const fail = document.createElement('div');
+      fail.className = 'voice-empty';
+      fail.textContent = '音频加载失败，请刷新';
+      audio.replaceWith(fail);
+    });
+    article.appendChild(audio);
+  } else {
+    const empty = document.createElement('div');
+    empty.className = 'voice-empty';
+    empty.textContent = model.ready ? '试听暂不可用' : '未配置 Key，暂不可试听';
+    article.appendChild(empty);
+  }
+  return article;
+}
+function render() {
+  modelTabs.replaceChildren();
+  root.replaceChildren();
+  state.models.forEach((model, index) => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'model-tab';
+    tab.dataset.target = `model-${model.id}`;
+    tab.style.setProperty('--dot', model.color);
+    tab.innerHTML = `<i></i><span>${model.name}</span><b>${model.voices.length}</b>`;
+    tab.addEventListener('click', () => {
+      document.getElementById(`model-${model.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActive(model.id);
+    });
+    modelTabs.appendChild(tab);
+    const section = document.createElement('section');
+    section.className = 'model-section';
+    section.id = `model-${model.id}`;
+    section.style.setProperty('--dot', model.color);
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = `<h2><i></i>${model.name}</h2><p>${model.hint || ''}</p><span class="count">${model.voices.length} 个音色</span>`;
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    for (const voice of model.voices) grid.appendChild(cardFor(model, voice));
+    section.append(head, grid);
+    root.appendChild(section);
+    if (index === 0) setActive(model.id);
   });
 }
-/* ===== 实时 TTS 音色库：豆包 / MiniMax / Soul / 讯飞 ===== */
-let providerCatalog = null;
-let activeProvider = 'minimax';
-const providerStatus = document.getElementById('providerStatus');
-const providerAudio = document.getElementById('providerAudio');
-providerAudio.addEventListener('error', () => {
-  providerStatus.textContent = '试听音频加载失败，请重试或更换音色';
+function setActive(id) {
+  for (const tab of modelTabs.querySelectorAll('.model-tab')) {
+    tab.classList.toggle('active', tab.dataset.target === `model-${id}`);
+  }
+}
+async function load() {
+  const [catalogRes, clonesRes] = await Promise.all([
+    fetch('/api/voice/catalog').then(r => r.json()),
+    fetch('/api/voice/cloned').then(r => r.json()).catch(() => ({ items: [] })),
+  ]);
+  const catalog = catalogRes.providers || [];
+  const cloneItems = clonesRes.items || [];
+  const provider = id => catalog.find(item => item.id === id) || { id, name: id, ready: false, voices: [], hint: '' };
+  const minimax = provider('minimax');
+  const minimaxAudio = Object.fromEntries(minimax.voices.map(v => [v.id, `/voices/minimax/system/${v.id}.wav`]));
+  const minimaxVoices = [
+    ...minimax.voices.map(v => ({ ...v, audio: minimaxAudio[v.id], tags: ['官方预置', ...(v.tags || [])] })),
+    ...cloneItems.map(item => ({ name: item.name, voice: item.voice_id, gender: item.gender, tags: ['克隆', ...(item.tags || [])], audio: item.demo })),
+    ...STATIC_MINIMAX_LEGACY,
+  ];
+  const soul = provider('soul');
+  const soulVoices = [
+    ...STATIC_SOUL,
+    ...SOUL_EXTRA.filter(extra => !STATIC_SOUL.some(item => item.voice === extra.voice)),
+  ];
+  const doubao = provider('doubao');
+  const iflytek = provider('iflytek');
+  state.models = [
+    { id:'minimax', name:'MiniMax', color:'#ff8a5c', ready:minimax.ready, hint:'官方预置 + 已克隆 + 历史候选', voices:minimaxVoices },
+    { id:'soul', name:'Soul', color:'#a78bfa', ready:soul.ready, hint:'直播实测音色', voices:soulVoices },
+    { id:'doubao', name:'豆包', color:'#5b8cff', ready:doubao.ready, hint:'火山引擎 · BV 系', voices:doubao.voices.map(v => ({ ...v, tags:[...(v.tags||[])] })) },
+    { id:'iflytek', name:'科大讯飞', color:'#46c7b8', ready:iflytek.ready, hint:'WebSocket v2', voices:iflytek.voices.map(v => ({ ...v, tags:[...(v.tags||[])] })) },
+  ];
+  state.byId = Object.fromEntries(state.models.map(model => [model.id, model]));
+  render();
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) setActive(entry.target.id.replace('model-', ''));
+    }
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  for (const section of root.querySelectorAll('.model-section')) observer.observe(section);
+}
+load().catch(error => {
+  root.innerHTML = `<div class="loading">音色加载失败：${error.message}</div>`;
 });
-
-async function loadProviderCatalog() {
-  try {
-    const res = await fetch('/api/voice/catalog');
-    const data = await res.json();
-    providerCatalog = data.providers || [];
-    const ready = providerCatalog.find(p => p.ready) || providerCatalog[0];
-    if (ready && !providerCatalog.some(p => p.id === activeProvider && p.ready)) activeProvider = ready.id;
-    renderProviderTabs();
-    renderProviderVoices();
-  } catch (error) {
-    providerStatus.textContent = `音色库加载失败：${error.message}`;
-  }
-}
-
-function renderProviderTabs() {
-  const host = document.getElementById('providerTabs');
-  host.replaceChildren();
-  for (const provider of providerCatalog || []) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `provider-tab${provider.id === activeProvider ? ' active' : ''}`;
-    button.textContent = `${provider.name}${provider.ready ? '' : ' · 未配置'}`;
-    button.style.setProperty('--provider-color', provider.color);
-    button.onclick = () => { activeProvider = provider.id; renderProviderTabs(); renderProviderVoices(); };
-    host.appendChild(button);
-  }
-}
-
-function renderProviderVoices() {
-  const host = document.getElementById('providerVoices');
-  const provider = providerCatalog?.find(item => item.id === activeProvider);
-  if (!host || !provider) return;
-  host.replaceChildren();
-  const head = document.createElement('div');
-  head.className = 'provider-head';
-  head.style.gridColumn = '1 / -1';
-  head.innerHTML = `<span class="provider-badge" style="--provider-color:${provider.color}"><i></i>${provider.name} · ${provider.vendor}</span><span class="note">${provider.hint}</span>`;
-  host.appendChild(head);
-  for (const voice of provider.voices) {
-    const card = document.createElement('div');
-    card.className = 'voice-card';
-    const title = document.createElement('h3');
-    title.textContent = voice.name;
-    const id = document.createElement('div');
-    id.className = 'voice-id';
-    id.textContent = voice.id;
-    const tags = document.createElement('div');
-    tags.className = 'voice-tags';
-    for (const text of [voice.gender === 'female' ? '女声' : '男声', ...(voice.tags || [])]) {
-      const tag = document.createElement('span');
-      tag.textContent = text;
-      tags.appendChild(tag);
-    }
-    const actions = document.createElement('div');
-    actions.className = 'voice-actions';
-    const play = document.createElement('button');
-    play.className = 'btn secondary';
-    play.textContent = '试听';
-    play.onclick = () => previewProviderVoice(provider, voice, play);
-    const state = document.createElement('span');
-    state.className = provider.ready ? 'note' : 'not-ready';
-    state.textContent = provider.ready ? '就绪' : '未配置 Key';
-    actions.append(play, state);
-    card.append(title, id, tags, actions);
-    host.appendChild(card);
-  }
-}
-
-async function previewProviderVoice(provider, voice, button) {
-  const text = document.getElementById('synthText').value.trim() || '大家好，欢迎来到直播间，这是我的声音。';
-  button.disabled = true;
-  providerStatus.textContent = `正在合成：${provider.name} · ${voice.name}…`;
-  try {
-    const res = await fetch('/api/voice/catalog/preview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider: provider.id, voice: voice.id, text: text.slice(0, 160) }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    if (!data.url) throw new Error('返回音频地址为空');
-    providerAudio.src = data.url;
-    providerAudio.style.display = 'block';
-    providerAudio.load();
-    providerStatus.textContent = `试听：${provider.name} · ${voice.name}（${data.format || 'wav'}，已加入句首语气词）`;
-    providerAudio.play().catch(() => {
-      providerStatus.textContent = `已生成：${provider.name} · ${voice.name}，点下方播放器试听`;
-    });
-  } catch (error) {
-    providerStatus.textContent = `试听失败：${error.message}`;
-  } finally {
-    button.disabled = false;
-  }
-}
-
-document.getElementById('saveProviderConfig').onclick = async () => {
-  const status = document.getElementById('providerConfigStatus');
-  status.textContent = '保存中…';
-  try {
-    const res = await fetch('/api/voice/provider-config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        doubao: {
-          app_id: document.getElementById('doubaoAppId').value.trim(),
-          access_token: document.getElementById('doubaoToken').value.trim(),
-          cluster: document.getElementById('doubaoCluster').value.trim(),
-        },
-        iflytek: {
-          app_id: document.getElementById('iflytekAppId').value.trim(),
-          api_key: document.getElementById('iflytekKey').value.trim(),
-          api_secret: document.getElementById('iflytekSecret').value.trim(),
-        },
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    status.textContent = '已保存';
-    await loadProviderCatalog();
-  } catch (error) {
-    status.textContent = `保存失败：${error.message}`;
-  }
-};
-
-async function loadClonedVoices() {
-  const host = document.getElementById('clonedVoices');
-  if (!host) return;
-  try {
-    const res = await fetch('/api/voice/cloned');
-    const data = await res.json();
-    const items = data.items || [];
-    document.getElementById('clonedCount').textContent = String(items.length);
-    host.replaceChildren();
-    for (const item of items) {
-      const card = document.createElement('div');
-      card.className = 'voice-card cloned-card';
-      const title = document.createElement('h3');
-      title.textContent = item.name;
-      const id = document.createElement('div');
-      id.className = 'voice-id';
-      id.textContent = item.voice_id;
-      const tags = document.createElement('div');
-      tags.className = 'voice-tags';
-      const tagList = [item.gender === 'female' ? '女声' : '男声', ...(item.tags || [])];
-      if (item.demo_text?.includes('(laughs)')) tagList.push('情绪 · 笑');
-      for (const text of tagList) {
-        const tag = document.createElement('span');
-        tag.textContent = text;
-        tags.appendChild(tag);
-      }
-      card.append(title, id, tags);
-      if (item.demo) {
-        const audio = document.createElement('audio');
-        audio.controls = true;
-        audio.preload = 'metadata';
-        audio.src = item.demo;
-        card.appendChild(audio);
-      } else {
-        const note = document.createElement('span');
-        note.className = 'note';
-        note.textContent = '试听音频生成中';
-        card.appendChild(note);
-      }
-      host.appendChild(card);
-    }
-  } catch (error) {
-    host.textContent = `克隆音色加载失败：${error.message}`;
-  }
-}
-
-loadProviderCatalog();
-loadClonedVoices();
 </script>
 </body>
 </html>
