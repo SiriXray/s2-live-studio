@@ -38,7 +38,52 @@
     "base_url": "https://api.loxinity.com",
     "voice_id": ""
   },
+  "vlm": {
+    "api_key": "",
+    "model": "qwen3-vl-plus",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  },
+  "singing": {
+    "music_dir": "D:/音乐AI MV Agent/音乐音频",
+    "default_avatar_id": ""
+  },
+  "live": {
+    "image_uri": "",
+    "persona": "你是一位自然、友好的中文直播主持人。直接回答观众的问题，每次回复不超过100字，适合口播。不编造商品信息。不用Markdown。"
+  },
+  "s2": {
+    "model": "vidu-s2",
+    "resolution": "720p",
+    "action": {
+      "enabled": true,
+      "library_id": "0"
+    },
+    "action_prompt": "",
+    "naturalness": {
+      "transition": {
+        "baseline_reset": true,
+        "videos": [],
+        "hold_ms": 400,
+        "auto_from_recent": true
+      },
+      "singing": {
+        "suppress_idle": true,
+        "tail_pad_ms": 600,
+        "ducking": 0.35
+      },
+      "dance": {
+        "segment_seconds": 2,
+        "bridge_action": true,
+        "bridge_text": "面向镜头微笑"
+      },
+      "idle": {
+        "interval_s": 12,
+        "rest_s": 4
+      }
+    }
+  },
   "doubao": {
+    "api_key": "",
     "app_id": "",
     "access_token": "",
     "cluster": "volcano_tts"
@@ -47,18 +92,5 @@
     "app_id": "",
     "api_key": "",
     "api_secret": ""
-  },
-  "vlm": {
-    "api_key": "",
-    "model": "qwen3-vl-plus",
-    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
-  },
-  "singing": {
-    "music_dir": "./music",
-    "default_avatar_id": ""
-  },
-  "live": {
-    "image_uri": "",
-    "persona": "你是一位自然、友好的中文直播主持人。直接回答观众的问题，每次回复不超过100字，适合口播。不编造商品信息。不用Markdown。"
   }
 }

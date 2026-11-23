@@ -262,7 +262,8 @@ function createStudio(options = {}) {
       }, AbortSignal.timeout(45000));
       const generatedDir = path.join(__dirname, '..', 'voices', 'generated');
       fs.mkdirSync(generatedDir, { recursive: true });
-      const name = `preview-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.wav`;
+      const ext = result.format === 'mp3' ? 'mp3' : 'wav';
+      const name = `preview-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${ext}`;
       const file = path.join(generatedDir, name);
       fs.writeFileSync(file, Buffer.from(result.audio, 'base64'), { mode: 0o644 });
       fs.chmodSync(file, 0o644);
@@ -273,6 +274,7 @@ function createStudio(options = {}) {
       const patch = {};
       if (input.doubao && typeof input.doubao === 'object') {
         patch.doubao = {
+          ...(input.doubao.api_key ? { api_key: String(input.doubao.api_key).slice(0, 300) } : {}),
           ...(input.doubao.app_id ? { app_id: String(input.doubao.app_id).slice(0, 120) } : {}),
           ...(input.doubao.access_token ? { access_token: String(input.doubao.access_token).slice(0, 300) } : {}),
           ...(input.doubao.cluster ? { cluster: String(input.doubao.cluster).slice(0, 80) } : {}),

@@ -63,7 +63,6 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid rgba(255,255,255,.0
     <h1>音色试听</h1>
     <a class="back" href="/">← 返回工作台</a>
   </div>
-  <p class="lead">按模型分组。点顶部标签跳到 MiniMax / Soul，再点标签跳到下一个模型；每条音色直接带上播放器。</p>
   <nav class="model-tabs" id="modelTabs" aria-label="模型切换"></nav>
   <main id="models"><div class="loading">正在加载音色…</div></main>
   <footer><span>S2 Live Studio</span><span>按模型展示 · 克隆音色归入 MiniMax</span></footer>
@@ -167,7 +166,7 @@ function render() {
     section.style.setProperty('--dot', model.color);
     const head = document.createElement('div');
     head.className = 'section-head';
-    head.innerHTML = `<h2><i></i>${model.name}</h2><p>${model.hint || ''}</p><span class="count">${model.voices.length} 个音色</span>`;
+    head.innerHTML = `<h2><i></i>${model.name}</h2><span class="count">${model.voices.length} 个音色</span>`;
     const grid = document.createElement('div');
     grid.className = 'grid';
     for (const voice of model.voices) grid.appendChild(cardFor(model, voice));
@@ -192,8 +191,8 @@ async function load() {
   const minimax = provider('minimax');
   const minimaxAudio = Object.fromEntries(minimax.voices.map(v => [v.id, `/voices/minimax/system/${v.id}.wav`]));
   const minimaxVoices = [
-    ...minimax.voices.map(v => ({ ...v, audio: minimaxAudio[v.id], tags: ['官方预置', ...(v.tags || [])] })),
     ...cloneItems.map(item => ({ name: item.name, voice: item.voice_id, gender: item.gender, tags: ['克隆', ...(item.tags || [])], audio: item.demo })),
+    ...minimax.voices.map(v => ({ ...v, audio: minimaxAudio[v.id], tags: ['官方预置', ...(v.tags || [])] })),
     ...STATIC_MINIMAX_LEGACY,
   ];
   const soul = provider('soul');
