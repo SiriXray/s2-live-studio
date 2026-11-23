@@ -127,6 +127,8 @@ footer a{color:var(--dim)}
 .provider-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
 .provider-config-grid label{display:grid;gap:4px;font-size:10px;color:var(--muted)}
 .provider-config-grid input{padding:8px;border:1px solid var(--line);border-radius:7px;background:rgba(255,255,255,.06);color:var(--fg);font-size:11px}
+.emotion-table{display:grid;grid-template-columns:1fr auto;gap:6px 18px;font-size:12px;color:var(--muted);margin-top:8px}
+.emotion-table b{color:#c7d2ff;font-family:var(--mono,monospace);font-weight:500}
 </style>
 </head>
 <body>
@@ -142,6 +144,19 @@ footer a{color:var(--dim)}
   <h2>已克隆音色 <span class="tag" id="clonedCount">5</span></h2>
   <p class="sub" style="margin-top:-6px">来自 `_cand` 的 5 段参考音频，已在 MiniMax 完成克隆；仅展示已获授权的素材。</p>
   <div class="grid" id="clonedVoices"></div>
+
+  <details class="provider-config">
+    <summary>情绪标签对照：让 TTS 不只会“念字”</summary>
+    <p class="note" style="margin:8px 0">标签只进 TTS；送 S2 的口播/字幕使用 speech_text（已清理标签）。Soul 自动把标签转成“哈哈/唉/嗯”等口语填充词。</p>
+    <div class="emotion-table">
+      <span>开心：哈哈哈</span><b>(laughs)</b>
+      <span>轻笑：嘿嘿 / 嘻嘻</span><b>(chuckle)</b>
+      <span>叹气：唉 / 哎</span><b>(sighs)</b>
+      <span>思考：嗯</span><b>(emm)</b>
+      <span>换气</span><b>(breath)</b>
+      <span>倒吸气</span><b>(gasps)</b>
+    </div>
+  </details>
 
   <h2>实测可开播 · Soul 真声</h2>
   <div class="grid" id="proven"></div>
@@ -665,7 +680,9 @@ async function loadClonedVoices() {
       id.textContent = item.voice_id;
       const tags = document.createElement('div');
       tags.className = 'voice-tags';
-      for (const text of [item.gender === 'female' ? '女声' : '男声', ...(item.tags || [])]) {
+      const tagList = [item.gender === 'female' ? '女声' : '男声', ...(item.tags || [])];
+      if (item.demo_text?.includes('(laughs)')) tagList.push('情绪 · 笑');
+      for (const text of tagList) {
         const tag = document.createElement('span');
         tag.textContent = text;
         tags.appendChild(tag);
