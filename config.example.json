@@ -38,6 +38,16 @@
     "base_url": "https://api.loxinity.com",
     "voice_id": ""
   },
+  "doubao": {
+    "app_id": "",
+    "access_token": "",
+    "cluster": "volcano_tts"
+  },
+  "iflytek": {
+    "app_id": "",
+    "api_key": "",
+    "api_secret": ""
+  },
   "vlm": {
     "api_key": "",
     "model": "qwen3-vl-plus",

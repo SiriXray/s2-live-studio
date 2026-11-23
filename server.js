@@ -18,6 +18,8 @@ const { createMonetLibrary, ACTION_STYLE } = require('./lib/monet-library');
 const { createInteraction } = require('./lib/interaction');
 const showroom = require('./lib/showroom');
 const s2Params = require('./lib/s2-params');
+const voiceCatalog = require('./lib/voice-catalog');
+const voicePreview = require('./lib/voice-preview');
 const { createNpcGame } = require('./lib/npcgame');
 const { getPersona, styleInstruction } = require('./lib/personas');
 const { voiceForPersona, patchForVoice, getVoice, listVoices } = require('./lib/voices');
@@ -236,6 +238,39 @@ function createStudio(options = {}) {
     if (request.method === 'POST' && pathname === '/api/s2/preview') {
       const input = await readJson(request, 256 * 1024);
       return json(response, 200, { payload: s2Params.preview(dataDir, input.s2 || input) });
+    }
+    if (request.method === 'GET' && pathname === '/api/voice/catalog') {
+      return json(response, 200, { providers: voiceCatalog.catalog(store.load()) });
+    }
+    if (request.method === 'POST' && pathname === '/api/voice/catalog/preview') {
+      const input = await readJson(request, 64 * 1024);
+      const result = await voicePreview.preview(store.load(), {
+        provider: String(input.provider || ''),
+        voice: String(input.voice || ''),
+        text: String(input.text || ''),
+      }, AbortSignal.timeout(45000));
+      return json(response, 200, result);
+    }
+    if (request.method === 'POST' && pathname === '/api/voice/provider-config') {
+      const input = await readJson(request, 64 * 1024);
+      const patch = {};
+      if (input.doubao && typeof input.doubao === 'object') {
+        patch.doubao = {
+          ...(input.doubao.app_id ? { app_id: String(input.doubao.app_id).slice(0, 120) } : {}),
+          ...(input.doubao.access_token ? { access_token: String(input.doubao.access_token).slice(0, 300) } : {}),
+          ...(input.doubao.cluster ? { cluster: String(input.doubao.cluster).slice(0, 80) } : {}),
+        };
+      }
+      if (input.iflytek && typeof input.iflytek === 'object') {
+        patch.iflytek = {
+          ...(input.iflytek.app_id ? { app_id: String(input.iflytek.app_id).slice(0, 120) } : {}),
+          ...(input.iflytek.api_key ? { api_key: String(input.iflytek.api_key).slice(0, 300) } : {}),
+          ...(input.iflytek.api_secret ? { api_secret: String(input.iflytek.api_secret).slice(0, 300) } : {}),
+        };
+      }
+      if (!Object.keys(patch).length) throw Object.assign(new Error('没有可保存的供应商配置'), { status: 400 });
+      store.save(patch);
+      return json(response, 200, { providers: voiceCatalog.catalog(store.load()) });
     }
     if (request.method === 'GET' && pathname === '/api/config') return json(response, 200, { ...store.view(), appearance: appearance.capabilities() });
     if (request.method === 'GET' && pathname === '/api/monet') return json(response, 200, { ...getManifest(), ...(monetProfile ? { persona: monetProfile.persona } : {}), library: monetLibrary.status(store.load()) });
