@@ -235,7 +235,8 @@ body.canvas-mode .canvas-exit{display:block}
 .ca-desc{font-size:9.5px;line-height:1.25;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .ca-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:1px}
 .ca-chip{font-size:8px;line-height:1;color:#aebcff;background:rgba(124,108,255,.08);border:1px solid rgba(124,108,255,.14);border-radius:4px;padding:3px 5px;white-space:nowrap}
-.ca-arrow{color:var(--muted);font-size:15px;margin-top:5px;transition:.15s}
+.ca-arrow{color:var(--muted);font-size:15px;margin:5px -6px 0 0;padding:6px;border-radius:6px;cursor:pointer;transition:.15s}
+.ca-arrow:hover{background:rgba(255,255,255,.06);color:#fff}
 .console-accordion[open] .ca-arrow{color:#b7a8ff;transform:rotate(90deg)}
 .ca-body{padding:0 11px 13px;background:transparent}
 .console-accordion[hidden]{display:none}

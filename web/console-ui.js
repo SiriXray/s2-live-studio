@@ -41,6 +41,7 @@ function upgradeSection(section, index) {
   if (heading.id) details.setAttribute('aria-labelledby', heading.id);
 
   const summary = document.createElement('summary');
+  summary.title = '点击展开；点右侧箭头收起';
   const icon = document.createElement('span');
   icon.className = 'ca-icon';
   icon.textContent = meta.icon;
@@ -72,7 +73,19 @@ function upgradeSection(section, index) {
   arrow.className = 'ca-arrow';
   arrow.setAttribute('aria-hidden', 'true');
   arrow.textContent = '›';
+  arrow.title = '展开 / 收起';
   summary.append(icon, main, arrow);
+
+  // 点标题只展开，不收起；要收起点右侧箭头。
+  // 这样点“人设”不会把已展开的面板又变回一条横线。
+  summary.addEventListener('click', event => {
+    event.preventDefault();
+    if (event.target.closest('.ca-arrow')) {
+      details.open = !details.open;
+    } else {
+      details.open = true;
+    }
+  });
 
   const body = document.createElement('div');
   body.className = 'ca-body';
