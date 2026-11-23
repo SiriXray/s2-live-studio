@@ -144,6 +144,26 @@ async function refreshFeed() {
 
 /* ---------- 双轨执行 ---------- */
 
+function playFullTransition(url) {
+  const stage = element('stageLive') || element('stage');
+  if (!stage || !url) return;
+  stage.querySelector('.transition-overlay')?.remove();
+  const video = document.createElement('video');
+  video.className = 'stage-overlay full transition-overlay';
+  video.src = url;
+  video.autoplay = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.setAttribute('aria-hidden', 'true');
+  video.style.objectFit = 'cover';
+  stage.appendChild(video);
+  const remove = () => video.remove();
+  video.onended = remove;
+  video.onerror = () => { remove(); feed('转场视频全屏预览失败，继续走 S2 转场', 'err'); };
+  setTimeout(remove, 20000);
+  feed('转场 · 人物转场视频全屏播放（cover 填满舞台）');
+}
+
 /* 特效/礼物视频：填满舞台下半屏（cover 裁切不变形）；full=true 整屏（图生视频 Q4 / 已生成成片） */
 function playOverlay(url, full = false) {
   const stage = element('stageLive') || element('stage');
@@ -679,6 +699,8 @@ async function switchAvatarWithTransition(videos, avatarId) {
   }
   await sleep(config.hold_ms ?? 400);
   if (!bridge.stream()?.switchAvatar) return false;
+  const transitionVideo = (videos || []).find(Boolean);
+  if (transitionVideo) playFullTransition(transitionVideo);
   return new Promise(resolve => {
     let settled = false;
     const finish = (ok) => {

@@ -255,3 +255,7 @@ body.canvas-mode .canvas-exit{display:block}
 .showroom-person .sp-start{position:absolute;right:8px;top:8px;z-index:3;padding:5px 8px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(12,10,22,.6);color:#fff;font-size:9px;backdrop-filter:blur(8px)}
 .showroom-person .sp-start:hover{background:var(--accent);border-color:var(--accent)}
 .showroom-person:hover{border-color:rgba(155,135,255,.7)}
+
+.field-help{font-size:9.5px;line-height:1.5;color:var(--muted);margin:5px 0 2px}
+.field-help b{color:#cfc8ea;font-weight:500}
+.stage-overlay.transition-overlay{z-index:7;background:#000;object-fit:cover}
