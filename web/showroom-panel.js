@@ -26,6 +26,7 @@ function currentAction() {
 const PEOPLE = [
   { industry: 'conversation', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '自然对话', meta: '自然对话 · 实时互动', image: '/showroom/avatars/social.jpg', outfit: '样板间·温柔陪伴', voice: 'female_tender_e', natural: true },
   { industry: 'conversation', scene: 'living_room', persona: 'susu', script: 'social_5', action: 'natural', name: '苏苏', meta: '萌妹娱乐 · 自然对话', image: '/showroom/avatars/susu.jpg', outfit: '样板间·苏苏', voice: 'female_lively_d', natural: true },
+  { industry: 'conversation', scene: 'living_room', persona: 'suyu', script: 'social_5', action: 'natural', name: '酥鱼', meta: '娱乐主播 · 自嗨热舞', image: '/showroom/avatars/suyu.jpg', outfit: '样板间·酥鱼', voice: 'female_lively_d' },
   { industry: 'social', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '温柔陪伴', meta: '社交直播 · 深夜客厅', image: '/showroom/avatars/social.jpg', outfit: '样板间·温柔陪伴', voice: 'female_tender_e' },
   { industry: 'social', scene: 'living_room', persona: 'sweet_energy', script: 'social_5', action: 'natural', name: '甜美元气', meta: '社交直播 · 甜心互动', image: '/showroom/avatars/sweet.jpg', outfit: '样板间·甜美元气', voice: 'female_lively_d' },
   { industry: 'social', scene: 'living_room', persona: 'funny_playful', script: 'social_5', action: 'lively', name: '搞笑俏皮', meta: '社交直播 · 轻松整活', image: '/showroom/avatars/funny.jpg', outfit: '样板间·搞笑俏皮', voice: 'male_low_a' },
@@ -51,6 +52,11 @@ const OPENINGS = {
     '欸？你来啦。先坐嘛，我又不会跑。今天不急着聊正事，你最近有没有一件小事，想起来就想笑？',
     '晚上好呀。先不用想怎么回答，随便说一句今天最真实的感受就行，我在听。',
     '我先不问你过得怎么样，那个太像客套了。说说今天有没有哪一刻，你突然想找个人说话？',
+  ],
+  '酥鱼': [
+    '欢迎大家，欢迎各位，最厉害了最厉害了。欢迎我自己，欢迎我自己。',
+    '家人们，左上角的福袋领回家了没有？领了的扣个1让我看看。',
+    '你们这个叫什么尖叫声呢，我才是尖叫声。来，陪我聊两句。',
   ],
   '温柔陪伴': [
     '来了呀，先坐，慢慢聊。今天不赶流程，先说说你今天过得怎么样，有没有哪一刻特别想找个人说说话？',
@@ -268,7 +274,7 @@ function syncSuyuControls(personaId) {
   const controls = document.getElementById('suyuScriptControls');
   if (!controls) return;
   const selected = personaId || $('showroomPersona')?.value || '';
-  controls.hidden = selected !== 'susu';
+  controls.hidden = selected !== 'suyu';
 }
 
 async function applyPerson(person, startAfter) {
@@ -296,29 +302,29 @@ async function applyPerson(person, startAfter) {
   return apply(startAfter, person.outfit, person.voice);
 }
 
-/* 中控台「苏苏专属脚本」：自动应用苏苏形象；设定版自动开播后播放脚本 */
+/* 中控台「酥鱼专属脚本」：自动应用酥鱼形象；设定版自动开播后播放脚本 */
 async function startSuSuPreset(preset, preview = false) {
-  const person = PEOPLE.find(item => item.persona === 'susu');
+  const person = PEOPLE.find(item => item.persona === 'suyu');
   if (!person) return;
-  status('苏苏脚本 · 正在应用苏苏形象…');
+  status('酥鱼脚本 · 正在应用酥鱼形象…');
   await applyPerson(person, false);
   if (preview) {
-    status('苏苏脚本 · 预演版开始（不推流）');
+    status('酥鱼脚本 · 预演版开始（不推流）');
     window.__playSuyuScript?.('preview', preset);
     return;
   }
   if (!window.S2Bridge?.isRunning?.()) {
-    status('苏苏脚本 · 正在开播…');
+    status('酥鱼脚本 · 正在开播…');
     await window.S2Bridge.startLive();
     for (let i = 0; i < 60 && !window.S2Bridge?.isRunning?.(); i++) {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
   if (!window.S2Bridge?.isRunning?.()) {
-    status('苏苏脚本 · 开播未就绪，请手动点「开始直播」后重试', true);
+    status('酥鱼脚本 · 开播未就绪，请手动点「开始直播」后重试', true);
     return;
   }
-  status('苏苏脚本 · 设定版开始播放');
+  status('酥鱼脚本 · 设定版开始播放');
   window.__playSuyuScript?.('live', preset);
 }
 window.__startSuSuPreset = startSuSuPreset;

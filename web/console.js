@@ -1081,7 +1081,7 @@ async function playSuyuScript(mode, preset = 'suyu') {
 }
 element('suyuDemo').onclick = () => {
   const persona = document.getElementById('showroomPersona')?.value;
-  if (persona !== 'susu') { toast('酥鱼脚本只绑定苏苏人设，请选择「苏苏」后再播放', true); return; }
+  if (persona !== 'suyu') { toast('酥鱼脚本只绑定酥鱼人设，请选择「酥鱼」后再播放', true); return; }
   playSuyuScript(element('scriptMode').value, element('suyuPreset').value);
 };
 window.__playSuyuScript = playSuyuScript;
