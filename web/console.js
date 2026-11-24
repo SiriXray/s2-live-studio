@@ -1081,8 +1081,9 @@ async function playSuyuScript(mode, preset = 'suyu') {
 }
 element('suyuDemo').onclick = () => {
   const persona = document.getElementById('showroomPersona')?.value;
-  if (persona !== 'suyu') { toast('酥鱼脚本只绑定酥鱼人设，请选择「酥鱼」后再播放', true); return; }
-  playSuyuScript(element('scriptMode').value, element('suyuPreset').value);
+  if (!['suyu', 'gaoxiao'].includes(persona)) { toast('酥鱼/抽象搞笑女脚本只绑定对应人设，请先选择对应人物', true); return; }
+  const preset = persona === 'gaoxiao' ? 'hotdance' : 'suyu';
+  playSuyuScript(element('scriptMode').value, preset);
 };
 window.__playSuyuScript = playSuyuScript;
 element('presetSuyuLive').onclick = () => window.__startSuSuPreset?.('suyu', element('presetPreview').checked);
