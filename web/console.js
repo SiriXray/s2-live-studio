@@ -776,6 +776,11 @@ window.__switchAvatarFailed = error => {
 
 async function injectEvent(payload) {
   try {
+    if (showroomSequenceToken && !showroomSequenceToken.cancelled) {
+      showroomSequenceToken.cancelled = true;
+      bridge.interrupt?.();
+      feed('样板间脚本 · 收到弹幕，立即切换为互动');
+    }
     const result = await api('/api/interaction/event', payload);
     if (result.dropped) { feed(`调度器 · 已过滤（${result.classification?.name || result.classification?.matched || '低价值'}）：${payload.text || payload.gift || payload.type}`); return; }
     if (result.queued) { feed('调度器 · 主播正在播报，已进入提问队列'); return; }
@@ -995,22 +1000,35 @@ setInterval(async () => {
 
 /* 画面就绪 → 立即自动开场（不等 cold_start_delay，无需手动开启语音） */
 /* 样板间脚本：开场白 + 3 条主动口播，段间固定 2 秒 */
+let showroomSequenceToken = null;
 async function playShowroomSequence(sequence) {
+  const token = { cancelled: false };
+  showroomSequenceToken = token;
   const lines = (sequence?.lines || []).filter(Boolean);
-  for (let index = 0; index < lines.length; index++) {
-    const line = lines[index];
-    feed(`样板间 · ${sequence.name} 口播 ${index + 1}/${lines.length}：${line.slice(0, 22)}…`);
+  const fetchLine = async raw => {
+    // TTS 不读「人设名」前缀，但句内文本保持完整，不按标点切开。
+    const text = String(raw).replace(/^\s*「[^」]{1,30}」\s*/u, '').trim() || String(raw).trim();
     const response = await fetch('/api/voice/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: line }),
+      body: JSON.stringify({ text }),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || `TTS HTTP ${response.status}`);
     if (!data.audio) throw new Error('TTS 未返回音频');
-    await bridge.speakOut(data.text || line, data.audio, data.text || line);
+    return { text: data.text || text, audio: data.audio };
+  };
+  let next = fetchLine(lines[0]);
+  for (let index = 0; index < lines.length; index++) {
+    if (token.cancelled) break;
+    const current = await next;
+    if (index + 1 < lines.length) next = fetchLine(lines[index + 1]);
+    if (token.cancelled) break;
+    feed(`样板间 · ${sequence.name} 口播 ${index + 1}/${lines.length}：${current.text.slice(0, 22)}…`);
+    await bridge.speakOut(current.text, current.audio, current.text);
     if (index < lines.length - 1) await sleep(2000);
   }
+  if (showroomSequenceToken === token) showroomSequenceToken = null;
 }
 
 /* 画面就绪 → 优先播放样板间脚本；没有脚本时走通用自动开场 */

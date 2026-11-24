@@ -261,7 +261,8 @@ async function applyPerson(person, startAfter) {
   $('showroomAction').value = person.action;
   const script = SPEECH_SCRIPTS[person.name];
   const choices = OPENINGS[person.name] || [];
-  $('showroomOpening').value = script?.opening || (choices.length ? choices[Math.floor(Math.random() * choices.length)] : (currentScript()?.opening || ''));
+  const opening = script?.opening || (choices.length ? choices[Math.floor(Math.random() * choices.length)] : (currentScript()?.opening || ''));
+  $('showroomOpening').value = opening.replace(/^\s*「[^」]{1,30}」\s*/u, '').trim();
   window.__showroomSequence = script ? {
     name: person.name,
     persona_id: person.persona,
