@@ -834,10 +834,10 @@ function toggleMockDanmaku() {
     if (!bridge?.isRunning?.() || singing || window.SALES_SCRIPT_RUNNING) return;
     const text = MOCK_COMMENTS[Math.floor(Math.random() * MOCK_COMMENTS.length)];
     injectEvent({ type: 'comment', text });
-  }, 6000 + Math.floor(Math.random() * 4000));
+  }, 2200 + Math.floor(Math.random() * 3000));
   button.textContent = '🤖 自动弹幕 开';
   button.setAttribute('aria-pressed', 'true');
-  feed('自动弹幕 · 已开启（每 9-14 秒一条模拟发言，演唱中暂停）');
+  feed('自动弹幕 · 已开启（每 2.2–5.2 秒一条模拟发言，演唱中暂停）');
 }
 element('autoDanmaku').onclick = toggleMockDanmaku;
 
