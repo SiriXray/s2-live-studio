@@ -11,6 +11,23 @@ const element = id => document.getElementById(id);
 const TIER_BADGE = { 0: 'P0', 1: 'P1', 2: 'P2', 3: 'P3', 4: 'P4', 5: 'P5' };
 let manifest = null;
 let executing = null; // { abort, priority, planId }
+let lastSpokenAt = Date.now();
+let fallbackBusy = false;
+let suyuScriptPlaying = false;
+const FALLBACK_CHAT_LINES = [
+  '宝宝们，我刚刚说到哪儿了？你们有没有在听呀。',
+  '今天上海天气有点凉，你们那边呢？',
+  '我最近在看一本很慢的书，翻得很慢，反而舍不得读完。',
+  '前几天看到一幅颜色淡淡的画，会让人安静下来。',
+  '今天突然想吃火锅，但一个人吃又觉得少了点什么。',
+  '你们最近刷到什么停不下来的视频？分享一下。',
+  '如果来上海玩，武康路拍照好看，外滩夜景也值得去。',
+  '有人去过环球影城吗？排队久，但沉浸感真的很强。',
+  '我想换套穿搭，甜一点还是酷一点？帮我选一个。',
+  '我学会一个小妙招：先加冰再倒汽水，气泡会更足。',
+  '你们晚饭吃了吗？没吃的话先去垫一口，我等你。',
+  '有没有人和我一样，晚上就想吃点宵夜。',
+];
 let voices = [];      // 音色档案（/api/config.voices）
 let singing = null;   // { abort, session } 实时唱歌会话
 let mvTask = null;    // 最近一次 MV 任务 { task_id, url, state }
@@ -237,6 +254,7 @@ async function pollEffect(taskId, attempt = 0, full = false) {
 
 async function executePlan(plan) {
   const priority = plan.priority ?? 3;
+  lastSpokenAt = Date.now();
   // 礼物到达：先叠一层即时礼物动效（零延迟），礼物特效任务在后台真实生成（绕过 dry_run），完成后覆盖播放
   if (String(plan.intent || '').startsWith('gift')) {
     bridge.giftOverlay?.(plan.gift?.name, plan.gift?.tier);
@@ -983,6 +1001,24 @@ element('gameStop').onclick = () => controlGame('stop');
 element('i2vCreate').onclick = createI2v;
 if (localStorage.getItem('s2_avatar_id')) element('mvAvatarId').placeholder = `上次使用：${localStorage.getItem('s2_avatar_id')}`;
 
+/* 兜底聊天：交互引擎/TTS 异常时也不能只剩动作，保证直播有连续人声 */
+async function fallbackChatter() {
+  if (fallbackBusy || suyuScriptPlaying || !bridge?.isRunning?.() || singing || executing) return;
+  fallbackBusy = true;
+  try {
+    const line = FALLBACK_CHAT_LINES[Math.floor(Math.random() * FALLBACK_CHAT_LINES.length)];
+    const data = await api('/api/voice/preview', { text: line });
+    if (data.audio && bridge.isReady()) {
+      lastSpokenAt = Date.now();
+      await bridge.speakOut(data.text || line, data.audio, data.text || line);
+      lastSpokenAt = Date.now();
+      feed(`兜底口播 · ${line.slice(0, 24)}…`);
+    }
+  } catch (error) {
+    feed(`兜底口播失败：${error.message}`, 'err');
+  } finally { fallbackBusy = false; }
+}
+
 /* 时间+状态触发轮询（冷启动/沉默/才艺锚点/PK拉票/静默小动作）；演唱中暂停主动互动 */
 setInterval(async () => {
   if (!bridge?.isRunning?.() || singing || window.SALES_SCRIPT_RUNNING) return;
@@ -996,6 +1032,8 @@ setInterval(async () => {
       }
     } else if (result.idle?.gaze) {
       feed('画面轨 · 自然停顿：无合适动作，保持镜头/静息');
+    } else if (!executing && !suyuScriptPlaying && Date.now() - lastSpokenAt > 2500) {
+      await fallbackChatter();
     }
   } catch { /* 下一轮重试 */ }
   refreshFeed();
@@ -1017,8 +1055,7 @@ const SUYU_SCRIPT = [
   { text: '我也想尝尝爱情的苦啊，这世界上这么多男人，为什么没有一个属于我的呢', actions: [] },
   { text: '老板们有没有不要的夜男人，送我两个呀，哈哈哈哈', actions: ['仰头闭眼大笑', '低头收不住笑'] },
 ];
-const SUYU_HOT_SCRIPT = [
-  { text: '欢迎大家，欢迎各位，最厉害了最厉害了', actions: ['右手脸侧比OK', '歪头卖萌'] },
+const SUYU_HOT_SCRIPT = [  { text: '欢迎大家，欢迎各位，最厉害了最厉害了', actions: ['右手脸侧比OK', '歪头卖萌'] },
   { text: '欢迎我自己，欢迎我自己', actions: ['凑近镜头贴脸'] },
   { text: '尖叫声一人屏一个小数好吗，欢迎欢迎欢迎，家人们', actions: ['手放耳后听', '歪头卖萌'] },
   { text: '左上角的福袋领回家了', actions: ['凑近镜头贴脸'] },
@@ -1037,6 +1074,51 @@ const SUYU_HOT_SCRIPT = [
   { text: '谢谢大哥，谢谢大哥，谢谢谢谢', actions: ['不停点头致谢', '双手比心'] },
   { text: '行，2,000人跳到1,800', actions: ['低头笑', '摊手轻耸肩'] },
 ];
+
+const XIAOMEI_SCRIPT = [
+  { text: '得到了些什么的呢宝宝，宝宝', actions: ['头左倾点右脸颊', '双手回落胸前'] },
+  { text: '这就是今天的穿搭，宝宝', actions: ['双手向两侧摊开'] },
+  { text: '不要再说对不起了，你再说对不起，给你哈出去', actions: ['右手前指后捂嘴'] },
+  { text: '你在飞机上吗？你还要飞起来，搭飞机走', actions: ['右手斜上抬做起飞'] },
+  { text: '这就是今天的穿搭了，捂住肚子上的肉肉', actions: ['双手腹前轻遮'] },
+  { text: '嗯宝宝', actions: ['歪头双手比小爱心'] },
+  { text: '这个是正面，谢谢宝宝，这个是侧面宝宝', actions: ['扶裙摆上半身左转'] },
+  { text: '谢谢各位小宝的赞赞，谢谢 soin 万岁', actions: ['双手合十', '轻轻挥手', '点头两次'] },
+  { text: '结束了宝宝，摆个 pose，结束了宝宝', actions: ['双手落腰侧定格', '头右倾15度'] },
+  { text: '学到了什么了呢，学到了什么了呢', actions: ['双手摊开掌心向上', '右手食指轻点太阳穴'] },
+  { text: '宝宝啊，哪里有游泳圈，没有的事情', actions: ['双手腹前左右摆'] },
+  { text: '你别乱讲，是你在乱讲小宝', actions: ['右手食指左右晃'] },
+  { text: '哪有敷衍二字，我明明很认真的，展示了今年的穿搭', actions: ['双手扶胸口蝴蝶结', '双手向两侧摊开'] },
+  { text: '臭弟弟你怎么不认呢，裙子是有故事的，说来听听', actions: ['下巴微抬眼上挑', '扶裙摆', '歪头双手指尖相触'] },
+  { text: '哈什么一个星期', actions: ['右手掌心朝镜头打住'] },
+  { text: '我不用你给我，你自己收收好', actions: ['双手胸前轻推'] },
+  { text: '宝宝你自己收收好，你别借，哎哟', actions: ['右手胸前小幅摆'] },
+  { text: '你别介没必要，小宝没必要', actions: ['双手掌心向外摆', '摇头'] },
+  { text: '我是老师嘛，对，叫我小美老师', actions: ['右手轻拍胸口', '下巴微抬'] },
+  { text: '我自己说自己老师怎么这么别扭', actions: ['右手轻扶额角'] },
+  { text: '是的我就是小美老师', actions: ['双手摊开掌心向上'] },
+  { text: '教兄弟们学穿搭的宝宝，嗯', actions: ['双手向外摊开', '点头一次'] },
+  { text: '还不一定多胖', actions: ['双手摊开', '耸肩一次'] },
+  { text: '我就是一个小胖子宝宝', actions: ['双手脸颊两侧比圆'] },
+  { text: '300斤呢能不胖吗，背得动吗', actions: ['右手比三', '双手掌心向上轻托'] },
+  { text: '记得之前是幼师，你怎么知道的', actions: ['眼睛睁大', '右手轻捂嘴'] },
+  { text: '你怎么知道我之前是幼师，我之前教小朋友', actions: ['双手胸前合掌', '点头两次'] },
+  { text: '现在在直播间教大朋友了，是不是', actions: ['右手食指前点两次', '头右歪'] },
+  { text: '谢谢小宝的关注', actions: ['双手合十', '点头一次'] },
+  { text: '紫色啊紫色唇釉', actions: ['右手食指抬至下巴下方'] },
+  { text: '谢谢关注', actions: ['右手胸前小幅挥手', '头右倾'] },
+  { text: '没有只有音乐声啊宝宝', actions: ['右手抬至耳侧侧耳听'] },
+  { text: '不要乱讲哦', actions: ['右手食指左右晃', '挑眉睁眼'] },
+  { text: '我们可是非常正能量的，绿色聊天直播间', actions: ['双手扶腰侧', '下巴微抬'] },
+  { text: '展示穿搭的直播间', actions: ['双手向两侧摊开'] },
+  { text: '你不要给我搞坏了啊，你不要搞坏了', actions: ['右手食指前点两次'] },
+  { text: '搞坏了我就要揍你了宝宝', actions: ['右手握小拳胸前轻挥', '嘟嘴'] },
+  { text: '什么歹徒兴奋拳打拳吗', actions: ['双手握拳胸前相碰', '头右歪'] },
+  { text: '哪里坏了', actions: ['双手摊开', '眼球左右扫', '耸肩'] },
+  { text: '哼', actions: ['下巴抬起', '头侧转', '双手浅交叉'] },
+  { text: '唯一宝宝干嘛，不告诉你', actions: ['右手食指竖唇前', '头歪'] },
+  { text: '谢谢我韵韵宝宝的小心心，谢谢宝宝', actions: ['双手比小爱心', '点头一次'] },
+];
 function previewSubtitle(text) {
   const sub = element('subtitle');
   const line = element('subtitleText');
@@ -1053,8 +1135,9 @@ function previewSubtitle(text) {
 async function playSuyuScript(mode, preset = 'suyu') {
   const live = mode === 'live';
   if (live && !bridge?.isRunning?.()) { toast('设定版需要先开始直播', true); return; }
-  const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : SUYU_SCRIPT;
-  const label = preset === 'hotdance' ? '自嗨热舞' : '酥鱼';
+  suyuScriptPlaying = true;
+  const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : preset === 'xiaomei' ? XIAOMEI_SCRIPT : SUYU_SCRIPT;
+  const label = preset === 'hotdance' ? '抽象搞笑女' : preset === 'xiaomei' ? '小美老师' : '酥鱼';
   feed(`${label}脚本 · ${live ? '设定版（1.1× 真实开播）' : '预演版（不推流）'} 开始`);
   for (const item of script) {
     try {
@@ -1065,6 +1148,7 @@ async function playSuyuScript(mode, preset = 'suyu') {
         previewSubtitle(item.text);
         await playLocal(data.audio);
       }
+      lastSpokenAt = Date.now();
       for (const action of item.actions || []) {
         if (live) { if (bridge.sendAction(action)) feed(`画面轨 · ${action}`); }
         else feed(`动作（预演）· ${action}`);
@@ -1076,18 +1160,20 @@ async function playSuyuScript(mode, preset = 'suyu') {
       break;
     }
   }
+  suyuScriptPlaying = false;
   previewSubtitle('');
   feed(`${label}脚本 · 播放完成`);
 }
 element('suyuDemo').onclick = () => {
   const persona = document.getElementById('showroomPersona')?.value;
-  if (!['suyu', 'gaoxiao'].includes(persona)) { toast('酥鱼/抽象搞笑女脚本只绑定对应人设，请先选择对应人物', true); return; }
-  const preset = persona === 'gaoxiao' ? 'hotdance' : 'suyu';
+  if (!['suyu', 'gaoxiao', 'xiaomei'].includes(persona)) { toast('专属脚本只绑定对应人设，请先选择对应人物', true); return; }
+  const preset = persona === 'gaoxiao' ? 'hotdance' : persona === 'xiaomei' ? 'xiaomei' : 'suyu';
   playSuyuScript(element('scriptMode').value, preset);
 };
 window.__playSuyuScript = playSuyuScript;
 element('presetSuyuLive').onclick = () => window.__startSuSuPreset?.('suyu', element('presetPreview').checked);
 element('presetHotLive').onclick = () => window.__startSuSuPreset?.('hotdance', element('presetPreview').checked);
+element('presetXiaomeiLive').onclick = () => window.__startSuSuPreset?.('xiaomei', element('presetPreview').checked);
 
 /* 画面就绪 → 立即自动开场（不等 cold_start_delay，无需手动开启语音） */
 /* 样板间脚本：开场白 + 3 条主动口播，段间固定 2 秒 */
