@@ -95,6 +95,10 @@
     <div class="drawer-header"><div><p class="eyebrow">INTERACTION CONSOLE</p><h2>中控台</h2></div><button id="closeConsole" class="square" aria-label="关闭中控台">×</button></div>
     <div id="consoleBody" class="drawer-body">
       <div class="console-filter"><div id="consoleTabs" class="console-tabs"></div><div class="console-tools"><button id="consoleExpandAll" type="button">展开全部</button><button id="consoleCollapseAll" type="button">收起全部</button></div></div>
+      <section class="drawer-section" aria-labelledby="csSuSuScripts"><h3 id="csSuSuScripts">苏苏专属脚本 <span class="tag">一键播放</span></h3>
+        <p class="help">只绑定苏苏人设；会自动应用苏苏形象并开播。勾选「预演」则只本地播放，不推流。</p>
+        <div class="natural-demo-row"><button id="presetSuyuLive" class="primary">▶ 预设1 · 酥鱼朗读</button><button id="presetHotLive" class="primary">▶ 预设2 · 自嗨热舞</button><label class="check-inline"><input id="presetPreview" type="checkbox"> 预演版（不推流）</label></div>
+      </section>
       <section class="drawer-section" aria-labelledby="csShowroom"><h3 id="csShowroom">样板间 · 行业最佳实践</h3>
         <div class="natural-demo-row"><button id="naturalDemo" class="primary">▶ 自然对话 Demo</button><small>一键套用最佳自然度：不背稿、低延迟、可打断</small></div>
         <details class="natural-guide"><summary>自然对话指导 List</summary><ol><li>只接一句重点，不抢话；先回应情绪，再给信息。</li><li>每轮 1–3 句，允许“嗯、对、我想想”等语气词和短停顿。</li><li>不做随机转头/眼神飘忽/抿嘴，静默保持自然呼吸。</li><li>弹幕到来立即停当前句，先接弹幕，不按脚本硬播。</li><li>同一句不要重复套路；下一句要承接上一句。</li><li>整句送 TTS，句内用逗号/省略号制造停顿，句间留 0.4–1.2s。</li></ol></details>

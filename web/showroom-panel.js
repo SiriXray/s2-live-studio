@@ -296,6 +296,33 @@ async function applyPerson(person, startAfter) {
   return apply(startAfter, person.outfit, person.voice);
 }
 
+/* 中控台「苏苏专属脚本」：自动应用苏苏形象；设定版自动开播后播放脚本 */
+async function startSuSuPreset(preset, preview = false) {
+  const person = PEOPLE.find(item => item.persona === 'susu');
+  if (!person) return;
+  status('苏苏脚本 · 正在应用苏苏形象…');
+  await applyPerson(person, false);
+  if (preview) {
+    status('苏苏脚本 · 预演版开始（不推流）');
+    window.__playSuyuScript?.('preview', preset);
+    return;
+  }
+  if (!window.S2Bridge?.isRunning?.()) {
+    status('苏苏脚本 · 正在开播…');
+    await window.S2Bridge.startLive();
+    for (let i = 0; i < 60 && !window.S2Bridge?.isRunning?.(); i++) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  if (!window.S2Bridge?.isRunning?.()) {
+    status('苏苏脚本 · 开播未就绪，请手动点「开始直播」后重试', true);
+    return;
+  }
+  status('苏苏脚本 · 设定版开始播放');
+  window.__playSuyuScript?.('live', preset);
+}
+window.__startSuSuPreset = startSuSuPreset;
+
 
 function renderIndustries() {
   const host = $('showroomIndustries');
