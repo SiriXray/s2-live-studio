@@ -1093,20 +1093,32 @@ const NATURAL_ACTION_LINE = [
 const ACTION_COMBO = ['甩头发', '凑近屏幕看弹幕', '歪头笑'];
 let naturalActionTimer = null;
 let naturalActionIndex = 0;
+const recentActions = [];
+function pickFreshAction() {
+  let pool = NATURAL_ACTION_LINE.filter(step => !recentActions.includes(step.name));
+  if (!pool.length) { recentActions.length = 0; pool = NATURAL_ACTION_LINE; }
+  const step = pool[Math.floor(Math.random() * pool.length)];
+  recentActions.push(step.name);
+  if (recentActions.length > 8) recentActions.shift();
+  return step.name;
+}
 function startNaturalActionLoop() {
   if (naturalActionTimer) return;
   naturalActionIndex = 0;
   naturalActionTimer = setInterval(() => {
     if (!bridge?.isRunning?.()) { stopNaturalActionLoop(); return; }
     if (naturalActionIndex % 7 === 0) {
-      ACTION_COMBO.forEach((action, i) => setTimeout(() => { if (bridge?.isRunning?.()) bridge.sendAction(action); }, i * 700));
-      feed('画面轨 · 自然动作组合：甩头发 → 凑近看弹幕 → 歪头笑');
+      const combo = ACTION_COMBO.filter(action => !recentActions.includes(action));
+      const parts = combo.length ? combo : ACTION_COMBO;
+      parts.forEach((action, i) => setTimeout(() => { if (bridge?.isRunning?.()) bridge.sendAction(action); }, i * 700));
+      parts.forEach(action => { recentActions.push(action); if (recentActions.length > 8) recentActions.shift(); });
+      feed(`画面轨 · 自然动作组合：${parts.join(' → ')}`);
       naturalActionIndex++;
       return;
     }
-    const step = NATURAL_ACTION_LINE[naturalActionIndex % NATURAL_ACTION_LINE.length];
+    const name = pickFreshAction();
     naturalActionIndex++;
-    if (bridge.sendAction(step.name)) feed(`画面轨 · 自然动作线：${step.name}`);
+    if (bridge.sendAction(name)) feed(`画面轨 · 自然动作线：${name}`);
   }, 3500);
   setTimeout(() => bridge.sendAction('正面抬头微笑'), 1200);
 }
