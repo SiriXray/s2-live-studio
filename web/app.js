@@ -1028,7 +1028,7 @@ async function speakOut(text, audioBase64, subtitleText) {
   if (!state.stream.sendOutputText(subtitle)) { state.speaking = false; throw new Error('口播文本发送失败'); }
   element('subtitle').textContent = subtitle; element('subtitle').hidden = false;
   try {
-    await sendPcm(state.stream, decodePcm(audioBase64), undefined, undefined, undefined, PCM_FRAME_BYTES);
+    await sendPcm(state.stream, decodePcm(audioBase64), undefined, undefined, undefined, PCM_FRAME_BYTES, 300);
   } finally {
     state.speaking = false;
     element('subtitle').hidden = true;

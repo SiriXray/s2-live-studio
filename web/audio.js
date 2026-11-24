@@ -9,13 +9,17 @@ export function decodePcm(base64) {
   return Uint8Array.from(binary, character => character.charCodeAt(0));
 }
 
-/** signal 可选：中控台/礼物播报（speakOut）不带 abort 信号也能正常推流 */
-export async function sendPcm(stream, bytes, signal, clock = () => performance.now(), wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)), frameBytes = FRAME_BYTES) {
+/** signal 可选：中控台/礼物播报（speakOut）不带 abort 信号也能正常推流。
+ * leadMs 是预缓冲：先提前发送一小段音频，吸收浏览器 setTimeout/渲染抖动，避免 S2 句中欠载卡顿。
+ * 只给完整 TTS 句使用；唱歌/舞蹈保持 0，避免破坏音画同步。
+ */
+export async function sendPcm(stream, bytes, signal, clock = () => performance.now(), wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)), frameBytes = FRAME_BYTES, leadMs = 0) {
   if (!bytes.length || bytes.length % 2) throw new Error('PCM16音频长度不合法');
   const start = clock();
+  const lead = Math.max(0, Number(leadMs) || 0);
   for (let offset = 0; offset < bytes.length; offset += frameBytes) {
     signal?.throwIfAborted();
-    const due = start + offset / 48;
+    const due = start + offset / 48 - lead;
     const delay = due - clock();
     if (delay > 0) await wait(delay);
     signal?.throwIfAborted();
@@ -25,7 +29,7 @@ export async function sendPcm(stream, bytes, signal, clock = () => performance.n
     frame.set(bytes.subarray(offset, offset + frameBytes));
     if (!stream.sendAudio(frame)) throw new Error('音频通道已断开');
   }
-  await wait(20);
+  await wait(20 + lead + (lead > 0 ? frameBytes / 48 : 0));
   signal?.throwIfAborted();
 }
 
