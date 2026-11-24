@@ -1075,8 +1075,7 @@ const SUYU_HOT_SCRIPT = [  { text: '欢迎大家，欢迎各位，最厉害了�
   { text: '行，2,000人跳到1,800', actions: ['低头笑', '摊手轻耸肩'] },
 ];
 
-const XIAOMEI_SCRIPT = [
-  { text: '得到了些什么的呢宝宝，宝宝', actions: ['头左倾点右脸颊', '双手回落胸前'] },
+const XIAOMEI_SCRIPT = [  { text: '得到了些什么的呢宝宝，宝宝', actions: ['头左倾点右脸颊', '双手回落胸前'] },
   { text: '这就是今天的穿搭，宝宝', actions: ['双手向两侧摊开'] },
   { text: '不要再说对不起了，你再说对不起，给你哈出去', actions: ['右手前指后捂嘴'] },
   { text: '你在飞机上吗？你还要飞起来，搭飞机走', actions: ['右手斜上抬做起飞'] },
@@ -1119,6 +1118,34 @@ const XIAOMEI_SCRIPT = [
   { text: '唯一宝宝干嘛，不告诉你', actions: ['右手食指竖唇前', '头歪'] },
   { text: '谢谢我韵韵宝宝的小心心，谢谢宝宝', actions: ['双手比小爱心', '点头一次'] },
 ];
+
+const XIAOMEI_CLIP_SCRIPT = [
+  { text: '小宝摸摸头', actions: ['摸摸头'] },
+  { text: '小宝今天有没有乖呢', actions: ['歪头微笑'] },
+  { text: '臭姐姐什么鬼', actions: ['挑眉'] },
+  { text: '你要叫我小美姐姐', actions: ['右手轻拍胸口'] },
+  { text: '你不要叫我臭姐姐', actions: ['右手食指左右晃'] },
+  { text: '你才是臭弟弟呢哼', actions: ['双手叉腰'] },
+  { text: '你才是臭弟弟呢', actions: ['右手食指前点'] },
+  { text: '谢谢关注', actions: ['双手合十'] },
+  { text: '好机会什么意思', actions: ['歪头'] },
+  { text: '什么机会宝宝', actions: ['摊手'] },
+  { text: '谢谢关注', actions: ['点头一次'] },
+  { text: '打人很痛的', actions: ['握拳轻挥'] },
+  { text: '等于歹徒兴奋剂', actions: ['摊手'] },
+  { text: '哪有啊我是真的揍宝宝', actions: ['握拳'] },
+  { text: '你要是惹到我', actions: ['指向镜头'] },
+  { text: '我是真的揍人的', actions: ['双手叉腰'] },
+  { text: '我很凶的', actions: ['瞪眼'] },
+  { text: '谢谢小宝的关注', actions: ['双手合十'] },
+  { text: '谢谢我尤浩宝宝的小心心', actions: ['双手比心'] },
+  { text: '谢谢小宝', actions: ['点头一次'] },
+  { text: '哼啊', actions: ['歪头哼'] },
+  { text: '谢谢我庭树宝宝的高级灯牌', actions: ['双手合十'] },
+  { text: '谢谢宝宝', actions: ['点头一次'] },
+  { text: '嗯', actions: ['微笑'] },
+  { text: '对展示穿搭来的这样吧的形式', actions: ['摊手'] },
+];
 function previewSubtitle(text) {
   const sub = element('subtitle');
   const line = element('subtitleText');
@@ -1136,8 +1163,8 @@ async function playSuyuScript(mode, preset = 'suyu') {
   const live = mode === 'live';
   if (live && !bridge?.isRunning?.()) { toast('设定版需要先开始直播', true); return; }
   suyuScriptPlaying = true;
-  const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : preset === 'xiaomei' ? XIAOMEI_SCRIPT : SUYU_SCRIPT;
-  const label = preset === 'hotdance' ? '抽象搞笑女' : preset === 'xiaomei' ? '小美老师' : '酥鱼';
+  const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : preset === 'xiaomei_clip' ? XIAOMEI_CLIP_SCRIPT : preset === 'xiaomei' ? XIAOMEI_SCRIPT : SUYU_SCRIPT;
+  const label = preset === 'hotdance' ? '抽象搞笑女' : preset === 'xiaomei_clip' ? '小美老师切片' : preset === 'xiaomei' ? '小美老师' : '酥鱼';
   feed(`${label}脚本 · ${live ? '设定版（1.1× 真实开播）' : '预演版（不推流）'} 开始`);
   for (const item of script) {
     try {
@@ -1167,13 +1194,14 @@ async function playSuyuScript(mode, preset = 'suyu') {
 element('suyuDemo').onclick = () => {
   const persona = document.getElementById('showroomPersona')?.value;
   if (!['suyu', 'gaoxiao', 'xiaomei'].includes(persona)) { toast('专属脚本只绑定对应人设，请先选择对应人物', true); return; }
-  const preset = persona === 'gaoxiao' ? 'hotdance' : persona === 'xiaomei' ? 'xiaomei' : 'suyu';
+  const preset = persona === 'gaoxiao' ? 'hotdance' : persona === 'xiaomei' ? 'xiaomei_clip' : 'suyu';
   playSuyuScript(element('scriptMode').value, preset);
 };
 window.__playSuyuScript = playSuyuScript;
 element('presetSuyuLive').onclick = () => window.__startSuSuPreset?.('suyu', element('presetPreview').checked);
 element('presetHotLive').onclick = () => window.__startSuSuPreset?.('hotdance', element('presetPreview').checked);
 element('presetXiaomeiLive').onclick = () => window.__startSuSuPreset?.('xiaomei', element('presetPreview').checked);
+element('presetXiaomeiClipLive').onclick = () => window.__startSuSuPreset?.('xiaomei_clip', element('presetPreview').checked);
 
 /* 画面就绪 → 立即自动开场（不等 cold_start_delay，无需手动开启语音） */
 /* 样板间脚本：开场白 + 3 条主动口播，段间固定 2 秒 */

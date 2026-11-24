@@ -292,7 +292,7 @@ function syncSuyuControls(personaId) {
   controls.hidden = !isSuyu && !isGaoxiao && !isXiaomei;
   if (!controls.hidden) {
     const preset = $('suyuPreset');
-    if (preset) preset.value = isSuyu ? 'suyu' : isXiaomei ? 'xiaomei' : 'hotdance';
+    if (preset) preset.value = isSuyu ? 'suyu' : isXiaomei ? 'xiaomei_clip' : 'hotdance';
   }
 }
 
@@ -323,7 +323,7 @@ async function applyPerson(person, startAfter) {
 
 /* 中控台「酥鱼专属脚本」：自动应用酥鱼形象；设定版自动开播后播放脚本 */
 async function startSuSuPreset(preset, preview = false) {
-  const personaId = preset === 'hotdance' ? 'gaoxiao' : preset === 'xiaomei' ? 'xiaomei' : 'suyu';
+  const personaId = preset === 'hotdance' ? 'gaoxiao' : (preset === 'xiaomei' || preset === 'xiaomei_clip') ? 'xiaomei' : 'suyu';
   const person = PEOPLE.find(item => item.persona === personaId);
   if (!person) return;
   status(`${person.name}脚本 · 正在应用形象…`);
