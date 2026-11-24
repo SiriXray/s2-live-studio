@@ -416,7 +416,15 @@ async function start() {
     element('turnStatus').textContent = '连接就绪，可以开始对话';
     log('对话通道就绪；仅将MiniMax回复语音送入Vidu，不混入麦克风原声', 'ok');
     maybeWelcomeMonet();
-  } catch (error) { if (version === state.version) { report(error); await stop(); } }
+  } catch (error) {
+    if (version === state.version) {
+      if (/已有直播正在创建或运行/.test(error.message)) {
+        await api('/api/live/reset', {}).catch(() => {});
+        toast('已清理残留直播会话，请再点一次「开始直播」', true);
+      } else report(error);
+      await stop();
+    }
+  }
   finally { if (version === state.version) { state.starting = false; controls(); } }
 }
 

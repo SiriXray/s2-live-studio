@@ -343,6 +343,16 @@ function createStudio(options = {}) {
       const hit = outfits().find(item => item.kind !== 'reference' && item.persona_id === personaId);
       return hit ? { id: hit.id, name: hit.name, preview: hit.preview } : null;
     }
+    if (request.method === 'POST' && pathname === '/api/live/reset') {
+      const cleared = [...sessions.keys()];
+      for (const session of sessions.values()) {
+        try { session.socket?.destroy?.(); } catch {}
+        try { session.upstream?.destroy?.(); } catch {}
+      }
+      sessions.clear();
+      creating = false;
+      return json(response, 200, { ok: true, cleared, note: '本地创建锁与直播会话已清空；旧 Vidu 会话会随 WS 断开结束' });
+    }
     if (request.method === 'POST' && pathname === '/api/live') {
       if (creating || sessions.size) return json(response, 409, { error: '已有直播正在创建或运行，请先结束，避免重复计费' });
       const body = await readJson(request);

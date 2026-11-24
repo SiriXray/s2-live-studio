@@ -1033,7 +1033,9 @@ async function playShowroomSequence(sequence) {
 
 /* 画面就绪 → 优先播放样板间脚本；没有脚本时走通用自动开场 */
 window.addEventListener('s2-live-ready', async () => {
-  if (!bridge?.isRunning?.()) return;
+  // RTC 首帧事件可能早于 state.running=true；这里以 WS 已就绪为准，
+  // 否则样板间脚本会被误判为“未开播”而不播放，表现为长时间无声/卡住。
+  if (!bridge?.isReady?.()) return;
   const sequence = window.__showroomSequence;
   if (sequence) {
     window.__showroomSequence = null;
