@@ -994,8 +994,35 @@ setInterval(async () => {
 }, 3000);
 
 /* 画面就绪 → 立即自动开场（不等 cold_start_delay，无需手动开启语音） */
+/* 样板间脚本：开场白 + 3 条主动口播，段间固定 2 秒 */
+async function playShowroomSequence(sequence) {
+  const lines = (sequence?.lines || []).filter(Boolean);
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+    feed(`样板间 · ${sequence.name} 口播 ${index + 1}/${lines.length}：${line.slice(0, 22)}…`);
+    const response = await fetch('/api/voice/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: line }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `TTS HTTP ${response.status}`);
+    if (!data.audio) throw new Error('TTS 未返回音频');
+    await bridge.speakOut(data.text || line, data.audio, data.text || line);
+    if (index < lines.length - 1) await sleep(2000);
+  }
+}
+
+/* 画面就绪 → 优先播放样板间脚本；没有脚本时走通用自动开场 */
 window.addEventListener('s2-live-ready', async () => {
   if (!bridge?.isRunning?.()) return;
+  const sequence = window.__showroomSequence;
+  if (sequence) {
+    window.__showroomSequence = null;
+    try { await playShowroomSequence(sequence); }
+    catch (error) { feed(`样板间脚本播放失败：${error.message}`, 'err'); }
+    return;
+  }
   try {
     const result = await api('/api/interaction/tick', { force_cold_start: true });
     if (result.plan) { feed(`唤醒触发 · ${result.plan.trigger}`); await executePlan(result.plan); }
