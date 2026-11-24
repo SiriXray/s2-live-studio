@@ -1001,6 +1001,57 @@ element('gameStop').onclick = () => controlGame('stop');
 element('i2vCreate').onclick = createI2v;
 if (localStorage.getItem('s2_avatar_id')) element('mvAvatarId').placeholder = `上次使用：${localStorage.getItem('s2_avatar_id')}`;
 
+/* 本地 MP3 → 24k 单声道 PCM → S2 口型；不经过 TTS，可并行 type 9 动作 */
+async function playLocalAudio() {
+  if (!bridge?.isRunning?.()) { toast('请先开始直播，再播放本地音频', true); return; }
+  const url = element('localAudioUrl').value.trim() || '/voices/local-tts.mp3';
+  const withActions = element('localAudioActions').checked;
+  try {
+    feed(`本地音频 · 正在读取 ${url}`);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const buffer = await response.arrayBuffer();
+    const ctx = new AudioContext();
+    const decoded = await ctx.decodeAudioData(buffer.slice(0));
+    await ctx.close();
+    const rate = 24000;
+    const frames = Math.max(1, Math.ceil(decoded.duration * rate));
+    const offline = new OfflineAudioContext(1, frames, rate);
+    const source = offline.createBufferSource();
+    source.buffer = decoded;
+    source.connect(offline.destination);
+    source.start(0);
+    const rendered = await offline.startRendering();
+    const floats = rendered.getChannelData(0);
+    const pcm = new Uint8Array(floats.length * 2);
+    const view = new DataView(pcm.buffer);
+    for (let i = 0; i < floats.length; i++) {
+      const s = Math.max(-1, Math.min(1, floats[i]));
+      view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    }
+    feed(`本地音频 · ${decoded.duration.toFixed(1)}s → 24k PCM，开始对口型`);
+    suyuScriptPlaying = true;
+    let done = false;
+    const playing = bridge.sendPcmRaw(pcm).finally(() => { done = true; });
+    if (withActions) {
+      await sleep(1200);
+      while (!done && bridge.isRunning()) {
+        const name = pickFreshAction();
+        if (bridge.sendAction(name)) feed(`画面轨 · 本地音频同步动作：${name}`);
+        await sleep(3500);
+      }
+    }
+    await playing;
+    feed('本地音频 · 播放完成');
+  } catch (error) {
+    feed(`本地音频失败：${error.message}`, 'err');
+    toast(`本地音频失败：${error.message}`, true);
+  } finally {
+    suyuScriptPlaying = false;
+  }
+}
+element('playLocalAudio').onclick = playLocalAudio;
+
 /* 兜底聊天：交互引擎/TTS 异常时也不能只剩动作，保证直播有连续人声 */
 async function fallbackChatter() {
   if (fallbackBusy || suyuScriptPlaying || !bridge?.isRunning?.() || singing || executing) return;

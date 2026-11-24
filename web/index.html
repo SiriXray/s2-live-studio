@@ -99,6 +99,10 @@
         <p class="help">预设1绑定酥鱼，预设2绑定抽象搞笑女；会自动应用对应形象并开播。勾选「预演」则只本地播放，不推流。</p>
         <div class="natural-demo-row"><button id="presetSuyuLive" class="primary">▶ 预设1 · 酥鱼朗读</button><button id="presetHotLive" class="primary">▶ 预设2 · 抽象搞笑女</button><button id="presetXiaomeiLive" class="primary">▶ 预设3 · 小美老师穿搭</button><button id="presetXiaomeiClipLive" class="primary">▶ 预设4 · 小美老师切片</button><label class="check-inline"><input id="presetPreview" type="checkbox"> 预演版（不推流）</label></div>
       </section>
+      <section class="drawer-section" aria-labelledby="csLocalAudio"><h3 id="csLocalAudio">本地 TTS 音频驱动</h3>
+        <p class="help">MP3 会转成 24k 单声道 PCM 直接送 S2 做口型，不经过 TTS；可同时下发 type 9 动作。</p>
+        <div class="natural-demo-row"><input id="localAudioUrl" value="/voices/local-tts.mp3" aria-label="本地音频地址" style="flex:1"><label class="check-inline"><input id="localAudioActions" type="checkbox" checked> 同时做动作</label><button id="playLocalAudio" class="primary">▶ 播放本地音频</button></div>
+      </section>
       <section class="drawer-section" aria-labelledby="csShowroom"><h3 id="csShowroom">样板间 · 行业最佳实践</h3>
         <div class="natural-demo-row"><button id="naturalDemo" class="primary">▶ 自然对话 Demo</button><small>一键套用最佳自然度：不背稿、低延迟、可打断</small></div>
         <details class="natural-guide"><summary>自然对话指导 List</summary><ol><li>只接一句重点，不抢话；先回应情绪，再给信息。</li><li>每轮 1–3 句，允许“嗯、对、我想想”等语气词和短停顿。</li><li>不做随机转头/眼神飘忽/抿嘴，静默保持自然呼吸。</li><li>弹幕到来立即停当前句，先接弹幕，不按脚本硬播。</li><li>同一句不要重复套路；下一句要承接上一句。</li><li>整句送 TTS，句内用逗号/省略号制造停顿，句间留 0.4–1.2s。</li></ol></details>

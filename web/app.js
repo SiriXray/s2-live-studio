@@ -1072,6 +1072,17 @@ window.S2Bridge = {
   isRunning: () => state.running,
   startLive: () => start(),
   speakOut,
+  /* 本地音频驱动：原始 24k 单声道 s16le PCM，直接送 S2 做口型；不经过 TTS */
+  sendPcmRaw: async (pcm) => {
+    if (!state.stream?.ready) throw new Error('直播未连接，无法发送本地音频');
+    if (state.speaking) interrupt(false);
+    state.speaking = true;
+    try {
+      await sendPcm(state.stream, pcm, undefined, undefined, undefined, PCM_FRAME_BYTES, 300);
+    } finally {
+      state.speaking = false;
+    }
+  },
   interrupt: () => interrupt(false),
   // 礼物即时动效：叠在直播画面上的轻量全屏特效（不依赖离线任务，零延迟）
   giftOverlay: (giftName, tier, iconOverride) => {
