@@ -4,6 +4,30 @@ import { decodePcm, sendPcm, pcmWav, STABLE_FRAME_BYTES } from './audio.js';
 import { MonetDirector, abortableDelay } from './monet-director.js';
 
 const element = id => document.getElementById(id);
+
+/* 影视式底部字幕：短句居中，长句从右向左滚动；不再占据画面中央。 */
+function showSubtitle(text) {
+  const box = element('subtitle');
+  const line = element('subtitleText');
+  if (!box || !line) return;
+  line.textContent = String(text || '');
+  box.hidden = false;
+  box.classList.remove('static');
+  line.style.animation = 'none';
+  void line.offsetWidth;
+  requestAnimationFrame(() => {
+    const shouldScroll = line.scrollWidth > box.clientWidth * 0.92;
+    if (!shouldScroll) { box.classList.add('static'); return; }
+    const duration = Math.max(8, Math.min(24, String(text || '').length * 0.18));
+    line.style.animation = `subtitle-scroll ${duration}s linear forwards`;
+  });
+}
+function hideSubtitle() {
+  const box = element('subtitle');
+  const line = element('subtitleText');
+  if (box) box.hidden = true;
+  if (line) { line.textContent = ''; line.style.animation = 'none'; }
+}
 const state = { config: null, outfits: [], personaOptions: [], selected: null, candidate: null, live: null, stream: null, rtc: null, running: false, starting: false, version: 0, turnVersion: 0, turnAbort: null, busy: false, speaking: false, history: [], recognition: null, previewAudio: null, recorder: null };
 const PCM_FRAME_BYTES = new URLSearchParams(location.search).get('pcm') === '20' ? 960 : STABLE_FRAME_BYTES;
 Object.assign(state, { reference: null, editing: null, editingStream: null, editingBusy: false, editingVersion: 0, pushUserId: '', editingTimer: null, previewAbort: null, previewUrl: null, previewBusy: false });
@@ -433,7 +457,7 @@ function interrupt(cancelMonet = true) {
   state.turnVersion++;
   state.turnAbort?.abort(); state.turnAbort = null;
   state.stream?.interrupt(); state.busy = false;
-  element('subtitle').hidden = true;
+  hideSubtitle();
   element('turnStatus').textContent = state.running ? '已打断，等待下一句话' : '等待开始直播';
   controls();
 }
@@ -582,14 +606,14 @@ async function sendTurn(text) {
     state.history.push({ role: 'user', content: text }, { role: 'assistant', content: result.text }); state.history = state.history.slice(-20);
     addMessage('assistant', result.text);
     element('llmStatus').textContent = '调用成功'; element('minimaxStatus').textContent = '合成成功';
-    element('subtitle').textContent = result.text; element('subtitle').hidden = false;
+    showSubtitle(result.text);
     element('turnStatus').textContent = '主播播报中…';
     log(`回复生成 ${(performance.now() - started).toFixed(0)}ms；音频 ${Math.round(result.duration_ms)}ms`);
     if (!state.stream.sendOutputText(result.text)) throw new Error('回复文本发送失败');
     await sendPcm(state.stream, decodePcm(result.audio), controller.signal);
     element('turnStatus').textContent = '可以继续说';
   } catch (error) {
-    if (version === state.turnVersion) { state.stream?.interrupt(); element('turnStatus').textContent = error.name === 'AbortError' ? '已打断' : '本轮失败，可重新发送'; element('subtitle').hidden = true; }
+    if (version === state.turnVersion) { state.stream?.interrupt(); element('turnStatus').textContent = error.name === 'AbortError' ? '已打断' : '本轮失败，可重新发送'; hideSubtitle(); }
     report(error);
   } finally { if (version === state.turnVersion) { state.busy = false; state.turnAbort = null; controls(); } }
 }
@@ -716,7 +740,7 @@ async function performMonet(result, signal) {
   if (result.text) {
     addMessage('assistant', result.text);
     state.history.push({ role: 'assistant', content: result.text }); state.history = state.history.slice(-20);
-    element('subtitle').textContent = result.text; element('subtitle').hidden = false;
+    showSubtitle(result.text);
     element('turnStatus').textContent = '莫奈正在回应…';
     if (result.needs_llm) element('llmStatus').textContent = '自然对话生成成功';
     element('minimaxStatus').textContent = '合成成功';
@@ -729,7 +753,7 @@ async function performMonet(result, signal) {
   await abortableDelay(remaining, signal);
   if (state.actionError) throw new Error(state.actionError);
   await waitForLiveFrames(state.editing?.output_user_id || state.pushUserId, signal);
-  element('subtitle').hidden = true;
+  hideSubtitle();
 }
 
 function runMonet(event, actionId) {
@@ -1034,12 +1058,13 @@ async function speakOut(text, audioBase64, subtitleText) {
   state.speaking = true;
   const subtitle = subtitleText || text;
   if (!state.stream.sendOutputText(subtitle)) { state.speaking = false; throw new Error('口播文本发送失败'); }
-  element('subtitle').textContent = subtitle; element('subtitle').hidden = false;
+  hideSubtitle();
+  showSubtitle(subtitle);
   try {
     await sendPcm(state.stream, decodePcm(audioBase64), undefined, undefined, undefined, PCM_FRAME_BYTES, 300);
   } finally {
     state.speaking = false;
-    element('subtitle').hidden = true;
+    hideSubtitle();
   }
 }
 window.S2Bridge = {

@@ -265,3 +265,11 @@ body.canvas-mode .canvas-exit{display:block}
 .natural-guide{margin:0 0 10px;padding:7px 9px;border:1px solid rgba(160,140,255,.18);border-radius:8px;background:rgba(120,100,200,.07);font-size:9.5px;color:var(--muted)}
 .natural-guide summary{cursor:pointer;color:#d9d1ff;font-size:10px}
 .natural-guide ol{margin:6px 0 0 17px;padding:0;line-height:1.55}
+
+/* 影视式底部字幕：只占画面最底部一条，长句从右向左滚动 */
+.subtitle{position:absolute;left:0;right:0;bottom:34px;z-index:6;display:flex;align-items:center;height:42px;padding:0 28px;background:linear-gradient(to top,rgba(4,7,12,.92),rgba(4,7,12,.55) 55%,rgba(4,7,12,0));font-size:13px;line-height:1.4;text-align:left;border-radius:0;max-height:none;overflow:hidden;pointer-events:none}
+.subtitle #subtitleText{position:absolute;top:50%;left:100%;transform:translateY(-50%);white-space:nowrap;color:#f7f4ff;letter-spacing:.02em;text-shadow:0 1px 2px #000,0 0 10px rgba(0,0,0,.8);will-change:left}
+.subtitle.static #subtitleText{position:static;left:auto;transform:none;animation:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@keyframes subtitle-scroll{from{left:100%}to{left:-100%}}
+@media(prefers-reduced-motion:reduce){.subtitle #subtitleText{animation:none!important;position:static;transform:none;left:auto;white-space:normal;max-height:36px;overflow:hidden}}
+@media(max-width:760px){.subtitle{height:36px;padding:0 14px;font-size:12px}}
