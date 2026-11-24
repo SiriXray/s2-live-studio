@@ -1166,17 +1166,24 @@ async function playSuyuScript(mode, preset = 'suyu') {
   const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : preset === 'xiaomei_clip' ? XIAOMEI_CLIP_SCRIPT : preset === 'xiaomei' ? XIAOMEI_SCRIPT : SUYU_SCRIPT;
   const label = preset === 'hotdance' ? '抽象搞笑女' : preset === 'xiaomei_clip' ? '小美老师切片' : preset === 'xiaomei' ? '小美老师' : '酥鱼';
   feed(`${label}脚本 · ${live ? '设定版（1.1× 真实开播）' : '预演版（不推流）'} 开始`);
+  const spokenLines = new Set();
+  let lastAction = '';
   for (const item of script) {
     try {
-      const data = await api('/api/voice/preview', { text: item.text });
+      const lineText = String(item.text || '').trim();
+      if (!lineText || spokenLines.has(lineText)) { feed(`去重跳过：${lineText || '（空行）'}`); continue; }
+      spokenLines.add(lineText);
+      const data = await api('/api/voice/preview', { text: lineText });
       if (live) {
-        if (bridge.isReady()) await bridge.speakOut(data.text || item.text, data.audio, data.text || item.text);
+        if (bridge.isReady()) await bridge.speakOut(data.text || lineText, data.audio, data.text || lineText);
       } else {
-        previewSubtitle(item.text);
+        previewSubtitle(lineText);
         await playLocal(data.audio);
       }
       lastSpokenAt = Date.now();
       for (const action of item.actions || []) {
+        if (action === lastAction) continue;
+        lastAction = action;
         if (live) { if (bridge.sendAction(action)) feed(`画面轨 · ${action}`); }
         else feed(`动作（预演）· ${action}`);
         await sleep(600);
