@@ -347,7 +347,7 @@ function renderOptions() {
 
 function setParams(triggers = {}) {
   $('showroomSilence').value = Number(triggers.silence_s ?? 10);
-  $('showroomIdle').value = Number(triggers.idle_motion_s ?? 8);
+  $('showroomIdle').value = Number(triggers.idle_motion_s ?? 0);
   $('showroomSmalltalk').value = Number(triggers.smalltalk_probability ?? 0.85);
 }
 

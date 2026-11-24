@@ -109,7 +109,7 @@
         <textarea id="showroomOpening" rows="2" maxlength="500"></textarea>
         <div class="sim-row showroom-params">
           <label>沉默 s<input id="showroomSilence" type="number" min="5" max="300" step="1"></label>
-          <label>动作 s<input id="showroomIdle" type="number" min="2" max="60" step="1"></label>
+          <label title="组件版自主待机小动作间隔；0=关闭，避免随机转头、眼神飘忽、抿嘴">微动作 s（0=关）<input id="showroomIdle" type="number" min="0" max="60" step="1"></label>
           <label>概率<input id="showroomSmalltalk" type="number" min="0" max="1" step="0.05"></label>
         </div>
         <div class="sim-row"><button id="showroomApply" class="primary">应用到控制台</button><button id="showroomTry" class="secondary">试动作</button></div>
