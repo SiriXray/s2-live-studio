@@ -1017,6 +1017,26 @@ const SUYU_SCRIPT = [
   { text: '我也想尝尝爱情的苦啊，这世界上这么多男人，为什么没有一个属于我的呢', actions: [] },
   { text: '老板们有没有不要的夜男人，送我两个呀，哈哈哈哈', actions: ['仰头闭眼大笑', '低头收不住笑'] },
 ];
+const SUYU_HOT_SCRIPT = [
+  { text: '欢迎大家，欢迎各位，最厉害了最厉害了', actions: ['右手脸侧比OK', '歪头卖萌'] },
+  { text: '欢迎我自己，欢迎我自己', actions: ['凑近镜头贴脸'] },
+  { text: '尖叫声一人屏一个小数好吗，欢迎欢迎欢迎，家人们', actions: ['手放耳后听', '歪头卖萌'] },
+  { text: '左上角的福袋领回家了', actions: ['凑近镜头贴脸'] },
+  { text: '谁是爱情主播？你们这个爱情主播，我这个单身的主播', actions: ['右手脸侧比OK'] },
+  { text: '你们这个叫什么尖叫声呢，我才是尖叫声，你们没夹起来', actions: ['手放耳后听'] },
+  { text: '又是我这个缠人的、迷人的小可爱', actions: ['歪头卖萌', '凑近镜头贴脸'] },
+  { text: '在这个做数据的时代，能不能做到、能不能做到', actions: ['高举手臂挥舞'] },
+  { text: '大哥大姐请继续点赞吧', actions: ['双手比心', '高举手臂挥舞'] },
+  { text: '我想和你们超薄0距离', actions: ['凑近镜头贴脸'] },
+  { text: '能不能给我来个数据', actions: ['高举手臂挥舞'] },
+  { text: '家人们，为什么直播间没大哥大姐', actions: ['摊手轻耸肩'] },
+  { text: '欢迎浩仔、欢迎仔仔', actions: ['抬手挥手打招呼'] },
+  { text: '你们这种不刷礼物的……', actions: ['假装生气', '歪头卖萌'] },
+  { text: '一个性感的小舞蹈送给大家', actions: ['扭胯摆臂', '双手比心', '手指镜头', '甩手', '原地转动'] },
+  { text: '记得我爱你就好、我爱你就好', actions: ['双手比心', '手指镜头'] },
+  { text: '谢谢大哥，谢谢大哥，谢谢谢谢', actions: ['不停点头致谢', '双手比心'] },
+  { text: '行，2,000人跳到1,800', actions: ['低头笑', '摊手轻耸肩'] },
+];
 function previewSubtitle(text) {
   const sub = element('subtitle');
   const line = element('subtitleText');
@@ -1030,11 +1050,13 @@ function previewSubtitle(text) {
     line.textContent = '';
   }
 }
-async function playSuyuScript(mode) {
+async function playSuyuScript(mode, preset = 'suyu') {
   const live = mode === 'live';
   if (live && !bridge?.isRunning?.()) { toast('设定版需要先开始直播', true); return; }
-  feed(`酥鱼脚本 · ${live ? '设定版（1.1× 真实开播）' : '预演版（不推流）'} 开始`);
-  for (const item of SUYU_SCRIPT) {
+  const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : SUYU_SCRIPT;
+  const label = preset === 'hotdance' ? '自嗨热舞' : '酥鱼';
+  feed(`${label}脚本 · ${live ? '设定版（1.1× 真实开播）' : '预演版（不推流）'} 开始`);
+  for (const item of script) {
     try {
       const data = await api('/api/voice/preview', { text: item.text });
       if (live) {
@@ -1055,12 +1077,12 @@ async function playSuyuScript(mode) {
     }
   }
   previewSubtitle('');
-  feed('酥鱼脚本 · 播放完成');
+  feed(`${label}脚本 · 播放完成`);
 }
 element('suyuDemo').onclick = () => {
   const persona = document.getElementById('showroomPersona')?.value;
   if (persona !== 'susu') { toast('酥鱼脚本只绑定苏苏人设，请选择「苏苏」后再播放', true); return; }
-  playSuyuScript(element('scriptMode').value);
+  playSuyuScript(element('scriptMode').value, element('suyuPreset').value);
 };
 
 /* 画面就绪 → 立即自动开场（不等 cold_start_delay，无需手动开启语音） */
