@@ -30,13 +30,14 @@
     "api_key": "",
     "model": "speech-2.8-turbo",
     "voice_id": "female-shaonv",
-    "speed": 1.15
+    "speed": 1.08
   },
   "soul": {
     "api_key": "",
     "model": "loxi-speech-1.0",
     "base_url": "https://api.loxinity.com",
-    "voice_id": ""
+    "voice_id": "",
+    "speed": 1.08
   },
   "vlm": {
     "api_key": "",
