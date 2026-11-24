@@ -358,11 +358,14 @@ function createStudio(options = {}) {
         const image = imageUri(body.outfit_id ? outfit(body.outfit_id).image_uri : body.image_uri || config.live.image_uri);
         // 动作匹配：开播即绑平台默认动作库（library_id "0"），含静默自然小动作；人设文本注入帮助动作更贴合风格
         const activePersona = getPersona(interaction.snapshot().config.persona_id);
-        const personaText = activePersona ? `${styleInstruction(activePersona)}`.slice(0, 20000) : '';
         const s2 = s2Params.load(dataDir);
         const actionPrompt = body.experience === 'monet'
           ? (monetProfile?.action_style || ACTION_STYLE)
           : s2.action_prompt;
+        // action_prompt 不是 S2 组件版官方字段；并入官方 persona（5 万字以内）。
+        const personaText = activePersona
+          ? `${styleInstruction(activePersona)}${actionPrompt ? `\n动作风格：${actionPrompt}` : ''}`.slice(0, 20000)
+          : '';
         creating = true;
         try {
           const suffix = crypto.randomBytes(6).toString('hex');
@@ -377,7 +380,6 @@ function createStudio(options = {}) {
               ? { enabled: true, library_id: library.library_id }
               : s2.action,
             ...(personaText ? { persona: personaText } : {}),
-            ...(actionPrompt ? { action_prompt: actionPrompt } : {}),
             customer_rtc: { provider: config.rtc.provider, app_id: push.app_id, channel_id: channelId, user_id: push.user_id, token: push.token },
           });
         if (!created.live?.id || (typeof created.live.id === 'number' && !Number.isSafeInteger(created.live.id)) || !/^\d+$/.test(String(created.live.id))) throw new Error('Vidu创建结果缺少无损live.id，请在控制台检查是否已创建，勿重复点击开播');

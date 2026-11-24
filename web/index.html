@@ -165,25 +165,24 @@
           <button class="chip" data-fx="watermelon_smash">🍉 砸西瓜</button>
         </div>
       </section>
-      <section class="drawer-section" aria-labelledby="csS2"><h3 id="csS2">S2 自然度参数 <span class="tag">组件版</span></h3>
-        <p class="help">分辨率 / 动作库 / 转场 / 唱跳节奏；保存后下一次开播或下一次转场生效。</p>
+      <section class="drawer-section" aria-labelledby="csS2"><h3 id="csS2">S2 参数 <span class="tag">Vidu 原生 + 本地时序</span></h3>
+        <p class="help">Vidu 官方组件版只接受 resolution / action / persona / RTC；转场用 type=15/16。下面标「本地」的只影响本站播放节奏，不发送给 Vidu。</p>
         <div class="sim-row">
           <label for="s2Resolution" class="visually-hidden">分辨率</label>
           <select id="s2Resolution"><option value="720p">720p</option><option value="1080p">1080p</option><option value="2k">2k</option></select>
           <input id="s2Library" maxlength="80" placeholder="动作库 library_id（0=默认）" value="0">
         </div>
         <label class="check-inline"><input id="s2ActionEnabled" type="checkbox" checked> 启用运行时动作匹配</label>
-        <textarea id="s2Prompt" rows="2" maxlength="2000" placeholder="动作风格提示 action_prompt（可留空）"></textarea>
+        <textarea id="s2Prompt" rows="2" maxlength="2000" placeholder="动作风格提示（并入 Vidu persona，不是独立字段；可留空）"></textarea>
         <div id="s2Presets" class="sim-row quick"></div>
-        <div class="sim-row s2-fields"><label title="两次待机小动作之间的间隔秒数">小动作 s<input id="s2Idle" type="number" min="3" max="120" value="12"></label><label title="每次小动作结束后的停顿秒数">休息 s<input id="s2Rest" type="number" min="0" max="30" value="4"></label></div>
-        <div class="sim-row s2-fields"><label title="每段舞蹈动作的时长秒数">舞蹈分段 s<input id="s2DanceSeg" type="number" min="1" max="10" step="0.5" value="2"></label><label title="复位后等待多久再切转场，避免黑帧">转场驻留 ms<input id="s2Hold" type="number" min="0" max="5000" value="400"></label></div>
-        <div class="sim-row s2-fields"><label title="歌曲结束后额外保留的静音收尾时长，避免尾音被切断">唱尾静音 ms<input id="s2Tail" type="number" min="0" max="3000" value="600"></label><label title="说话/唱歌时背景音乐被压低的程度，0.35 表示压低到 35%">伴奏压低 ducking<input id="s2Ducking" type="number" min="0" max="1" step="0.05" value="0.35"></label></div>
-        <p class="field-help"><b>小动作</b>：两次待机动作间隔；<b>休息</b>：动作后停顿；<b>舞蹈分段</b>：每段舞蹈时长。</p>
-        <p class="field-help"><b>转场驻留</b>：复位后等多久再切；<b>唱尾静音</b>：歌曲结束后保留的收尾静音。</p>
-        <p class="field-help"><b>ducking</b>：说话/唱歌时伴奏压低比例，0.35 = 压低到 35%。</p>
+        <div class="sim-row s2-fields"><label title="本地：两次待机小动作之间的间隔；0=关闭">小动作 s（本地）<input id="s2Idle" type="number" min="0" max="120" value="0"></label><label title="本地：每次小动作结束后的停顿">休息 s（本地）<input id="s2Rest" type="number" min="0" max="30" value="0"></label></div>
+        <div class="sim-row s2-fields"><label title="本地：每段舞蹈动作的时长">舞蹈分段 s（本地）<input id="s2DanceSeg" type="number" min="1" max="10" step="0.5" value="2"></label><label title="本地：复位后等待多久再切转场，避免黑帧">转场驻留 ms（本地）<input id="s2Hold" type="number" min="0" max="5000" value="400"></label></div>
+        <div class="sim-row s2-fields"><label title="本地：歌曲结束后保留的收尾静音">唱尾静音 ms（本地）<input id="s2Tail" type="number" min="0" max="3000" value="600"></label><label title="当前版本未接入混音，ducking 仅预留">伴奏压低 ducking（预留）<input id="s2Ducking" type="number" min="0" max="1" step="0.05" value="0.35"></label></div>
+        <p class="field-help"><b>官方字段</b>：resolution、action.enabled/library_id、persona、switch_videos、switch_on_ready、baseline_reset(type=15)。</p>
+        <p class="field-help"><b>本地参数</b>：小动作、休息、舞蹈分段、转场驻留、唱尾静音只影响本站时序；ducking 当前未接入混音，不生效。</p>
         <label class="check-inline"><input id="s2Baseline" type="checkbox" checked> 转场前复位（type 15）</label>
         <label class="check-inline"><input id="s2OnReady" type="checkbox" checked> 转场就绪即切（switch_on_ready）</label>
-        <label class="check-inline"><input id="s2SuppressIdle" type="checkbox" checked> 唱歌时抑制 idle</label>
+        <label class="check-inline"><input id="s2SuppressIdle" type="checkbox" checked> 唱歌时抑制本地 idle</label>
         <label class="check-inline"><input id="s2Bridge" type="checkbox" checked> 舞蹈动作桥接</label>
         <textarea id="s2Videos" rows="3" placeholder="转场视频 URL，每行一个（1–10 个，http(s)，单个 ≤30min，累计 ≤60min）"></textarea>
         <div class="sim-row"><input id="s2AvatarId" maxlength="80" placeholder="资产 avatar_id"><button id="s2Register" class="secondary">注册当前形象</button></div>
