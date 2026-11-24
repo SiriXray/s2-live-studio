@@ -280,6 +280,7 @@ async function applyPerson(person, startAfter) {
     persona_id: person.persona,
     lines: [script.opening, ...(script.proactive || [])],
   } : null;
+  window.__showroomNatural = Boolean(person.natural);
   setParams(industry?.params || {});
   renderIndustries();
   renderScenes();

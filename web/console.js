@@ -845,7 +845,10 @@ element('autoDanmaku').onclick = toggleMockDanmaku;
 async function triggerFx(key, label) {
   try {
     const icon = label.match(/^\S+/)?.[0] || '';
-    bridge.giftOverlay?.(label.replace(/^\S+\s*/, ''), undefined, icon);
+    const giftName = label.replace(/^\S+\s*/, '').trim() || '礼物';
+    // 特效礼物也要触发致谢口播（低档：致谢 + 小动作），再叠加视觉特效。
+    injectEvent({ type: 'gift', gift: giftName, value: 6 }).catch(error => feed(`致谢未触发：${error.message}`, 'err'));
+    bridge.giftOverlay?.(giftName, undefined, icon);
     const image = await bridge.avatarImage();
     if (!image) { feed('特效 · 未选择主播形象，无法发起特效任务', 'err'); return; }
     const task = await api('/api/effect/dance', { kind: 'effect', fx: key, image_uri: image });
@@ -1031,11 +1034,40 @@ async function playShowroomSequence(sequence) {
   if (showroomSequenceToken === token) showroomSequenceToken = null;
 }
 
+/* 自然对话动作线：来自 5 段参考视频的分镜拆解（欢迎/羞涩/俏皮/讲述节奏），
+ * 循环下发已知动作库动作，避免“每句只会挥手/比心”的单调感。 */
+const NATURAL_ACTION_LINE = [
+  { name: '面向镜头挥手', delay: 0 },
+  { name: '摊开双手', delay: 700 },
+  { name: '双手在胸前比心', delay: 1400 },
+  { name: '手指点下巴思考', delay: 2100 },
+  { name: '捂嘴偷笑', delay: 2800 },
+  { name: '轻轻点头', delay: 3500 },
+];
+let naturalActionTimer = null;
+let naturalActionIndex = 0;
+function startNaturalActionLoop() {
+  if (naturalActionTimer) return;
+  naturalActionIndex = 0;
+  naturalActionTimer = setInterval(() => {
+    if (!bridge?.isRunning?.()) { stopNaturalActionLoop(); return; }
+    const step = NATURAL_ACTION_LINE[naturalActionIndex % NATURAL_ACTION_LINE.length];
+    naturalActionIndex++;
+    if (bridge.sendAction(step.name)) feed(`画面轨 · 自然动作线：${step.name}`);
+  }, 6000);
+  setTimeout(() => bridge.sendAction('面向镜头微笑'), 1200);
+}
+function stopNaturalActionLoop() {
+  clearInterval(naturalActionTimer);
+  naturalActionTimer = null;
+}
+
 /* 画面就绪 → 优先播放样板间脚本；没有脚本时走通用自动开场 */
 window.addEventListener('s2-live-ready', async () => {
   // RTC 首帧事件可能早于 state.running=true；这里以 WS 已就绪为准，
   // 否则样板间脚本会被误判为“未开播”而不播放，表现为长时间无声/卡住。
   if (!bridge?.isReady?.()) return;
+  if (window.__showroomNatural) startNaturalActionLoop();
   const sequence = window.__showroomSequence;
   if (sequence) {
     window.__showroomSequence = null;
