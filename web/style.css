@@ -259,3 +259,9 @@ body.canvas-mode .canvas-exit{display:block}
 .field-help{font-size:9.5px;line-height:1.5;color:var(--muted);margin:5px 0 2px}
 .field-help b{color:#cfc8ea;font-weight:500}
 .stage-overlay.transition-overlay{z-index:7;background:#000;object-fit:cover}
+
+.natural-demo-row{display:flex;align-items:center;gap:10px;margin:8px 0 10px;flex-wrap:wrap}
+.natural-demo-row small{color:var(--muted);font-size:9.5px;line-height:1.45}
+.natural-guide{margin:0 0 10px;padding:7px 9px;border:1px solid rgba(160,140,255,.18);border-radius:8px;background:rgba(120,100,200,.07);font-size:9.5px;color:var(--muted)}
+.natural-guide summary{cursor:pointer;color:#d9d1ff;font-size:10px}
+.natural-guide ol{margin:6px 0 0 17px;padding:0;line-height:1.55}

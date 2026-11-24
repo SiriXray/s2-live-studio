@@ -24,6 +24,7 @@ function currentAction() {
 }
 
 const PEOPLE = [
+  { industry: 'conversation', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '自然对话', meta: '自然对话 · 实时互动', image: '/showroom/avatars/social.jpg', outfit: '样板间·温柔陪伴', voice: 'female_tender_e', natural: true },
   { industry: 'social', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '温柔陪伴', meta: '社交直播 · 深夜客厅', image: '/showroom/avatars/social.jpg', outfit: '样板间·温柔陪伴', voice: 'female_tender_e' },
   { industry: 'social', scene: 'living_room', persona: 'sweet_energy', script: 'social_5', action: 'natural', name: '甜美元气', meta: '社交直播 · 甜心互动', image: '/showroom/avatars/sweet.jpg', outfit: '样板间·甜美元气', voice: 'female_lively_d' },
   { industry: 'social', scene: 'living_room', persona: 'funny_playful', script: 'social_5', action: 'lively', name: '搞笑俏皮', meta: '社交直播 · 轻松整活', image: '/showroom/avatars/funny.jpg', outfit: '样板间·搞笑俏皮', voice: 'male_low_a' },
@@ -40,6 +41,11 @@ const PEOPLE = [
 ];
 
 const OPENINGS = {
+  '自然对话': [
+    '来了呀，先坐。今天不急着聊正事，你最近有没有一件小事，想起来就想笑？',
+    '晚上好。先不用想怎么回答，随便说一句今天最真实的感受就行，我在听。',
+    '我先不问你过得怎么样，那个太像客套了。说说今天有没有哪一刻，你突然想找个人说话？',
+  ],
   '温柔陪伴': [
     '来了呀，先坐，慢慢聊。今天不赶流程，先说说你今天过得怎么样，有没有哪一刻特别想找个人说说话？',
     '晚上好，我是今晚陪你聊天的人。先把声音放轻一点，我们从一个很小的问题开始：今天有没有什么小事，让你偷偷开心了一下？',
@@ -481,6 +487,11 @@ async function load() {
   }
   $('showroomApply').onclick = () => apply();
   $('showroomTry').onclick = () => tryActions();
+  const naturalDemo = $('naturalDemo');
+  if (naturalDemo) naturalDemo.onclick = () => {
+    const person = PEOPLE.find(item => item.natural);
+    if (person) return applyPerson(person, true);
+  };
   $('showroomScript').onchange = () => {
     const script = currentScript();
     if (script) $('showroomOpening').value = script.opening;
