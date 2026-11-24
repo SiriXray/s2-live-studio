@@ -34,6 +34,9 @@ const PEOPLE = [
   { industry: 'gaming', scene: 'palace', persona: 'npc_qing_dai', script: 'npc_scene', action: 'stage', name: '古风侍女', meta: '影游互动 · 宫宴侍女', image: '/showroom/avatars/qing.jpg', outfit: '样板间·古风侍女', voice: 'female_tender_e' },
   { industry: 'music', scene: 'stage', persona: 'velvety_night', script: 'music_5', action: 'natural', name: '磁性电台', meta: '音乐电台 · 音乐舞台', image: '/showroom/avatars/music.jpg', outfit: '样板间·磁性电台', voice: 'male_velvety_f' },
   { industry: 'music', scene: 'stage', persona: 'cool_queen', script: 'music_5', action: 'natural', name: '高冷御姐', meta: '音乐电台 · 冷感舞台', image: '/showroom/avatars/cool.jpg', outfit: '样板间·高冷御姐', voice: 'female_clear_a' },
+  { industry: 'gaming', scene: 'palace', persona: 'npc_ya_nv', script: 'npc_scene', action: 'stage', name: '神秘说书', meta: '影游悬疑 · 神秘说书', image: '/showroom/avatars/mystery.jpg', outfit: '样板间·神秘说书', voice: 'female_tender_e' },
+  { industry: 'music', scene: 'stage', persona: 'npc_xia_zhi', script: 'music_5', action: 'natural', name: '校园电台', meta: '校园电台 · 夜间点歌', image: '/showroom/avatars/campus.jpg', outfit: '样板间·校园电台', voice: 'female_sweet_b' },
+  { industry: 'education', scene: 'scholar', persona: 'npc_lin_doctor', script: 'education_20', action: 'education', name: '职业科普', meta: '职业科普 · 知识书房', image: '/showroom/avatars/doctor.jpg', outfit: '样板间·职业科普', voice: 'male_velvety_f' },
 ];
 
 const OPENINGS = {
@@ -86,6 +89,21 @@ const OPENINGS = {
     '来了就坐，别拘谨。我说话直，你也不用绕。今天想聊什么，先把最重要的一句说清楚。',
     '我不太喜欢寒暄，直接进入正题。你现在的状态，是来听建议，还是只想找个人把话说完？',
     '先别急着解释。你想让别人理解你，还是想让自己想明白？这两个答案，会决定我们接下来怎么聊。',
+  ],
+  '神秘说书': [
+    '嘘，别急着开口。你听——钟摆停在了十二点，可故事才刚刚开始。今晚我想讲一个人，她在末班车上丢了名字。',
+    '我讲故事有个规矩：只讲一半，另一半由你决定。先告诉我，你相信一个哑女能听见别人心里的声音吗？',
+    '旧报纸上说，那间公寓从没有人住过。可每晚十二点，总有人听见打字机在响。你想先听哪一个版本？',
+  ],
+  '校园电台': [
+    '这里是校园电台，晚上十点半。先把耳机戴好，今天想和你聊一个很小的问题：你有没有在走廊里假装偶遇过一个人？',
+    '欢迎收听，今晚的点歌单里有一首没有署名的歌。点歌的人说，只要前奏响起，那个人就会知道。',
+    '下课铃刚响，广播站还剩最后一盏灯。今天不聊考试，聊聊你最近一次心动，是发生在图书馆还是操场？',
+  ],
+  '职业科普': [
+    '今天讲一个大家都会遇到、但很少人讲清楚的问题。先给结论，再拆成三步，最后告诉你今天就能怎么做。',
+    '我不是来吓你的，只讲能用的。先看这个常见误区，再给你一个今天就能执行的做法。',
+    '如果你只记住一句话，请记住：先把问题定义清楚，答案就已经出现一半。接下来我用一个真实场景，把它拆开讲。',
   ],
 };
 
