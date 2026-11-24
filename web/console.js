@@ -1040,9 +1040,9 @@ const NATURAL_ACTION_LINE = [
   { name: '面向镜头挥手', delay: 0 },
   { name: '摊开双手', delay: 700 },
   { name: '双手在胸前比心', delay: 1400 },
-  { name: '手指点下巴思考', delay: 2100 },
-  { name: '捂嘴偷笑', delay: 2800 },
-  { name: '轻轻点头', delay: 3500 },
+  { name: '一只手轻戳脸部，假装思考', delay: 2100 },
+  { name: '眨眼微笑一下，再恢复表情', delay: 2800 },
+  { name: '双手伸个懒腰，然后放下', delay: 3500 },
 ];
 let naturalActionTimer = null;
 let naturalActionIndex = 0;
