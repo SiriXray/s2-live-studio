@@ -999,7 +999,7 @@ setInterval(async () => {
     }
   } catch { /* 下一轮重试 */ }
   refreshFeed();
-}, 3000);
+}, 1000);
 
 /* 画面就绪 → 立即自动开场（不等 cold_start_delay，无需手动开启语音） */
 /* 样板间脚本：开场白 + 3 条主动口播，段间固定 2 秒 */
@@ -1054,7 +1054,7 @@ function startNaturalActionLoop() {
     const step = NATURAL_ACTION_LINE[naturalActionIndex % NATURAL_ACTION_LINE.length];
     naturalActionIndex++;
     if (bridge.sendAction(step.name)) feed(`画面轨 · 自然动作线：${step.name}`);
-  }, 6000);
+  }, 3500);
   setTimeout(() => bridge.sendAction('面向镜头微笑'), 1200);
 }
 function stopNaturalActionLoop() {
@@ -1067,7 +1067,7 @@ window.addEventListener('s2-live-ready', async () => {
   // RTC 首帧事件可能早于 state.running=true；这里以 WS 已就绪为准，
   // 否则样板间脚本会被误判为“未开播”而不播放，表现为长时间无声/卡住。
   if (!bridge?.isReady?.()) return;
-  if (window.__showroomNatural) startNaturalActionLoop();
+  startNaturalActionLoop();
   const sequence = window.__showroomSequence;
   if (sequence) {
     window.__showroomSequence = null;
