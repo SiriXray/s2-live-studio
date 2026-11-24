@@ -1001,6 +1001,64 @@ setInterval(async () => {
   refreshFeed();
 }, 300);
 
+/* 酥鱼脚本：预演版（本地播放，不推流）与设定版（1.1× 真实开播） */
+const SUYU_SCRIPT = [
+  { text: '是什么意思呢，你就读就行了……准备好了吗？好', actions: [] },
+  { text: '这是我认识的妖银吗？', actions: ['张嘴大笑'] },
+  { text: '哈哈哈，这台词是跟你昨天那个有点异曲同工之妙啊，异曲同工', actions: ['边笑边歪头'] },
+  { text: '哈哈哈，来，我要酝酿一下', actions: ['抬手捂嘴'] },
+  { text: '咱们都来个不一样的版本吧，怎么样', actions: [] },
+  { text: '你们酝酿一下，我先给你们来一遍，我先给你们打个样，你们酝酿一下', actions: [] },
+  { text: '我给你换一个啊', actions: ['切换背景音乐'] },
+  { text: '大家好，我是酥鱼，有一段话憋在我心里很久了，实在忍不住了，今天给大家说段心里话呀', actions: ['抬手捂嘴', '低头念稿'] },
+  { text: '我真的想男人想得要发疯了。我躺在床上会想男人，我洗澡的时候会想男人，我出门的时候会想男人', actions: [] },
+  { text: '我盯着路边的男人看，我盯着地铁里的男人看，我盯着好朋友的男人看', actions: [] },
+  { text: '我孤独呀，我一个人的时候孤独呀', actions: [] },
+  { text: '我也想尝尝爱情的苦啊，这世界上这么多男人，为什么没有一个属于我的呢', actions: [] },
+  { text: '老板们有没有不要的夜男人，送我两个呀，哈哈哈哈', actions: ['仰头闭眼大笑', '低头收不住笑'] },
+];
+function previewSubtitle(text) {
+  const sub = element('subtitle');
+  const line = element('subtitleText');
+  if (!sub || !line) return;
+  if (text) {
+    sub.hidden = false;
+    sub.classList.add('static');
+    line.textContent = text;
+  } else {
+    sub.hidden = true;
+    line.textContent = '';
+  }
+}
+async function playSuyuScript(mode) {
+  const live = mode === 'live';
+  if (live && !bridge?.isRunning?.()) { toast('设定版需要先开始直播', true); return; }
+  feed(`酥鱼脚本 · ${live ? '设定版（1.1× 真实开播）' : '预演版（不推流）'} 开始`);
+  for (const item of SUYU_SCRIPT) {
+    try {
+      const data = await api('/api/voice/preview', { text: item.text });
+      if (live) {
+        if (bridge.isReady()) await bridge.speakOut(data.text || item.text, data.audio, data.text || item.text);
+      } else {
+        previewSubtitle(item.text);
+        await playLocal(data.audio);
+      }
+      for (const action of item.actions || []) {
+        if (live) { if (bridge.sendAction(action)) feed(`画面轨 · ${action}`); }
+        else feed(`动作（预演）· ${action}`);
+        await sleep(600);
+      }
+      await sleep(live ? 300 : 500);
+    } catch (error) {
+      feed(`酥鱼脚本中断：${error.message}`, 'err');
+      break;
+    }
+  }
+  previewSubtitle('');
+  feed('酥鱼脚本 · 播放完成');
+}
+element('suyuDemo').onclick = () => playSuyuScript(element('scriptMode').value);
+
 /* 画面就绪 → 立即自动开场（不等 cold_start_delay，无需手动开启语音） */
 /* 样板间脚本：开场白 + 3 条主动口播，段间固定 2 秒 */
 let showroomSequenceToken = null;
