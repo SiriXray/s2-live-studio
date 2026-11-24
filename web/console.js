@@ -1057,7 +1057,11 @@ async function playSuyuScript(mode) {
   previewSubtitle('');
   feed('酥鱼脚本 · 播放完成');
 }
-element('suyuDemo').onclick = () => playSuyuScript(element('scriptMode').value);
+element('suyuDemo').onclick = () => {
+  const persona = document.getElementById('showroomPersona')?.value;
+  if (persona !== 'susu') { toast('酥鱼脚本只绑定苏苏人设，请选择「苏苏」后再播放', true); return; }
+  playSuyuScript(element('scriptMode').value);
+};
 
 /* 画面就绪 → 立即自动开场（不等 cold_start_delay，无需手动开启语音） */
 /* 样板间脚本：开场白 + 3 条主动口播，段间固定 2 秒 */

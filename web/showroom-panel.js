@@ -264,6 +264,13 @@ function renderPeople() {
   }
 }
 
+function syncSuyuControls(personaId) {
+  const controls = document.getElementById('suyuScriptControls');
+  if (!controls) return;
+  const selected = personaId || $('showroomPersona')?.value || '';
+  controls.hidden = selected !== 'susu';
+}
+
 async function applyPerson(person, startAfter) {
   const industry = catalog?.industries.find(item => item.id === person.industry);
   selectedIndustry = person.industry;
@@ -271,6 +278,7 @@ async function applyPerson(person, startAfter) {
   $('showroomPersona').value = person.persona;
   $('showroomScript').value = person.script;
   $('showroomAction').value = person.action;
+  syncSuyuControls(person.persona);
   const script = SPEECH_SCRIPTS[person.name];
   const choices = OPENINGS[person.name] || [];
   const opening = script?.opening || (choices.length ? choices[Math.floor(Math.random() * choices.length)] : (currentScript()?.opening || ''));
@@ -386,6 +394,7 @@ function syncFromState(state) {
   $('showroomScript').value = state.script_id;
   $('showroomAction').value = state.action_id;
   $('showroomOpening').value = state.opening || '';
+  syncSuyuControls(state.persona_id);
   setParams(state.triggers || {});
   renderIndustries();
   renderScenes();
@@ -503,6 +512,7 @@ async function load() {
     const script = currentScript();
     if (script) $('showroomOpening').value = script.opening;
   };
+  $('showroomPersona').onchange = () => syncSuyuControls();
 }
 
 load();
