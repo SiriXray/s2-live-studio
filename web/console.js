@@ -1130,7 +1130,7 @@ const XIAOMEI_CLIP_SCRIPT = [
   { text: '谢谢关注', actions: ['双手合十'] },
   { text: '好机会什么意思', actions: ['歪头'] },
   { text: '什么机会宝宝', actions: ['摊手'] },
-  { text: '谢谢关注', actions: ['点头一次'] },
+  { text: '谢谢关注宝宝', actions: ['点头一次'] },
   { text: '打人很痛的', actions: ['握拳轻挥'] },
   { text: '等于歹徒兴奋剂', actions: ['摊手'] },
   { text: '哪有啊我是真的揍宝宝', actions: ['握拳'] },
