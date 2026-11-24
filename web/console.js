@@ -1034,16 +1034,63 @@ async function playShowroomSequence(sequence) {
   if (showroomSequenceToken === token) showroomSequenceToken = null;
 }
 
-/* 自然对话动作线：来自 5 段参考视频的分镜拆解（欢迎/羞涩/俏皮/讲述节奏），
- * 循环下发已知动作库动作，避免“每句只会挥手/比心”的单调感。 */
+/* 自然对话动作线：按真实开播高频动作排权重，循环下发；复杂动作拆成短指令随机组合。 */
 const NATURAL_ACTION_LINE = [
-  { name: '面向镜头挥手', delay: 0 },
-  { name: '摊开双手', delay: 700 },
-  { name: '双手在胸前比心', delay: 1400 },
-  { name: '一只手轻戳脸部，假装思考', delay: 2100 },
-  { name: '眨眼微笑一下，再恢复表情', delay: 2800 },
-  { name: '双手伸个懒腰，然后放下', delay: 3500 },
+  { name: '凑近屏幕看弹幕' },
+  { name: '假哭擦泪' },
+  { name: '甩头发' },
+  { name: '翻白眼' },
+  { name: '眨单眼' },
+  { name: '捧脸' },
+  { name: '歪头笑' },
+  { name: '捂嘴偷笑' },
+  { name: '整理衣领' },
+  { name: '凑近屏幕看弹幕' },
+  { name: '托腮' },
+  { name: '双手托腮歪头' },
+  { name: '拨头发到耳后' },
+  { name: '手背贴脸颊' },
+  { name: '食指竖在唇边' },
+  { name: '单手比耶' },
+  { name: '手指点下巴思考' },
+  { name: '戳脸颊卖萌' },
+  { name: '摸耳垂害羞' },
+  { name: '对手指害羞' },
+  { name: '握拳加油打气' },
+  { name: '拱手作揖感谢' },
+  { name: '飞吻' },
+  { name: '比枪发射爱心' },
+  { name: '手在胸前画心' },
+  { name: '打响指' },
+  { name: '单手捂胸口' },
+  { name: '双手环抱再放开' },
+  { name: '抚摸肩颈' },
+  { name: '甩头发' },
+  { name: '正面抬头微笑' },
+  { name: '抬手挥手打招呼' },
+  { name: '双手胸前轻拍' },
+  { name: '竖起大拇指点赞' },
+  { name: '单手比心' },
+  { name: '双手摊开掌心朝上' },
+  { name: '食指朝上点一下' },
+  { name: '五指并拢向下切' },
+  { name: '食指竖胸前' },
+  { name: '拇指食指张开七字' },
+  { name: '一只手比一二三' },
+  { name: '双手胸前转一圈' },
+  { name: '掌心朝前轻推' },
+  { name: '摊手轻耸肩' },
+  { name: '困意揉眼' },
+  { name: '舔唇抿嘴' },
+  { name: '假装生气' },
+  { name: '挤眉弄眼做鬼脸' },
+  { name: '眼神左看右看回镜头' },
+  { name: '双手比耶' },
+  { name: '手背擦汗' },
+  { name: '五指插发梳一次' },
+  { name: '上身左右轻晃' },
 ];
+const ACTION_COMBO = ['甩头发', '凑近屏幕看弹幕', '歪头笑'];
 let naturalActionTimer = null;
 let naturalActionIndex = 0;
 function startNaturalActionLoop() {
@@ -1051,11 +1098,17 @@ function startNaturalActionLoop() {
   naturalActionIndex = 0;
   naturalActionTimer = setInterval(() => {
     if (!bridge?.isRunning?.()) { stopNaturalActionLoop(); return; }
+    if (naturalActionIndex % 7 === 0) {
+      ACTION_COMBO.forEach((action, i) => setTimeout(() => { if (bridge?.isRunning?.()) bridge.sendAction(action); }, i * 700));
+      feed('画面轨 · 自然动作组合：甩头发 → 凑近看弹幕 → 歪头笑');
+      naturalActionIndex++;
+      return;
+    }
     const step = NATURAL_ACTION_LINE[naturalActionIndex % NATURAL_ACTION_LINE.length];
     naturalActionIndex++;
     if (bridge.sendAction(step.name)) feed(`画面轨 · 自然动作线：${step.name}`);
   }, 3500);
-  setTimeout(() => bridge.sendAction('面向镜头微笑'), 1200);
+  setTimeout(() => bridge.sendAction('正面抬头微笑'), 1200);
 }
 function stopNaturalActionLoop() {
   clearInterval(naturalActionTimer);
