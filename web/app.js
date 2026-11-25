@@ -91,8 +91,8 @@ function controls() {
 async function loadConfig() {
   state.config = await api('/api/config');
   const config = state.config;
-  const names = { llm: 'LLM（recaption）', minimax: 'MiniMax', vidu: 'Vidu', rtc: 'RTC', soul: 'Soul（备选声音）' };
-  const missing = Object.keys(config.readiness).filter(key => !config.readiness[key]);
+  const names = { llm: 'LLM（recaption）', minimax: 'MiniMax', vidu: 'Vidu', rtc: 'RTC' };
+  const missing = Object.keys(config.readiness).filter(key => key !== 'soul' && !config.readiness[key]);
   const notice = element('notice');
   notice.hidden = missing.length === 0;
   notice.textContent = missing.length ? `还需配置：${missing.map(key => names[key]).join('、')}` : '';
@@ -284,14 +284,14 @@ async function auditionVoice() {
     state.auditionUrl = URL.createObjectURL(pcmWav(decodePcm(result.audio)));
     state.auditionAudio = new Audio(state.auditionUrl);
     await state.auditionAudio.play();
-    element('voiceProfileHint').textContent = `${result.provider === 'soul' ? 'Soul 克隆' : 'MiniMax 回落'} · ${(result.duration_ms / 1000).toFixed(1)}s · ${picked.dataset.soul}`;
+    element('voiceProfileHint').textContent = `MiniMax · ${(result.duration_ms / 1000).toFixed(1)}s · ${picked.dataset.minimax}`;
   } catch (error) {
     element('voiceProfileHint').textContent = `试听失败：${error.message}`;
   } finally { button.disabled = false; }
 }
 
 function fillVoiceProfiles() {
-  const voices = state.config.voices || [];
+  const voices = Array.isArray(state.config?.voices) ? state.config.voices : [];
   const select = element('voiceProfile');
   select.replaceChildren();
   // 女声 / 男声两个分组，同一列表内分区展示
@@ -326,10 +326,10 @@ async function openSettings() {
   element('persona').value = config.live.persona;
   element('rtcProvider').value = config.rtc.provider;
   element('inheritHint').textContent = config.inherits_rtc ? '已读取本机 QuickStart RTC 配置。' : '填写自己的 RTC 凭据。';
-  for (const provider of ['vidu', 'llm', 'minimax', 'soul']) { element(`${provider}Key`).value = ''; element(`${provider}KeySet`).textContent = config[provider].api_key_set ? '· 已配置' : '· 未配置'; }
+  for (const provider of ['vidu', 'llm', 'minimax']) { element(`${provider}Key`).value = ''; element(`${provider}KeySet`).textContent = config[provider].api_key_set ? '· 已配置' : '· 未配置'; }
   element('settingsError').textContent = '';
   fillRtcFields();
-  element('settingsDialog').showModal();
+  if (!element('settingsDialog').open) element('settingsDialog').showModal();
 }
 
 async function saveSettings(event) {
@@ -345,11 +345,10 @@ async function saveSettings(event) {
       vidu: { api_key: element('viduKey').value.trim(), host: element('viduHost').value },
       llm: { api_key: element('llmKey').value.trim(), model: element('llmModel').value.trim() },
       minimax: { api_key: element('minimaxKey').value.trim(), model: element('minimaxModel').value.trim(), voice_id: voice.minimax, speed: Number(element('voiceSpeed').value) },
-      soul: { api_key: element('soulKey').value.trim(), voice_id: voice.soul },
       live: { persona: element('persona').value.trim() },
       rtc: { provider, [provider]: { [appKey]: provider === 'trtc' ? Number(element('rtcAppId').value) : element('rtcAppId').value.trim(), [secretKey]: element('rtcSecret').value.trim() } },
     });
-    for (const field of ['viduKey', 'llmKey', 'minimaxKey', 'soulKey', 'rtcSecret']) element(field).value = '';
+    for (const field of ['viduKey', 'llmKey', 'minimaxKey', 'rtcSecret']) element(field).value = '';
     await loadConfig();
     element('settingsDialog').close(); toast('连接设置已保存到本机'); log('连接设置已保存');
   } catch (error) { element('settingsError').textContent = error.message; }
@@ -810,7 +809,11 @@ function toggleRecognition() {
   catch (error) { stopRecognition(); report(error); }
 }
 
-element('settingsButton').onclick = () => openSettings().catch(report);
+element('settingsButton').onclick = () => {
+  const dialog = element('settingsDialog');
+  if (!dialog.open) dialog.showModal();
+  openSettings().catch(error => { console.error('openSettings failed', error); toast(error.message, true); });
+};
 if (new URLSearchParams(location.search).get('experience') === 'monet') element('experience').value = 'monet';
 element('monetDemo').onclick = () => runMonet('demo');
 element('monetMatrix').onclick = () => runMonet('matrix');
