@@ -28,7 +28,7 @@ const PEOPLE = [
   { industry: 'conversation', scene: 'living_room', persona: 'susu', script: 'social_5', action: 'natural', name: '苏苏', meta: '萌妹娱乐 · 自然对话', image: '/showroom/avatars/susu.jpg', outfit: '样板间·苏苏', voice: 'female_lively_d', natural: true },
   { industry: 'conversation', scene: 'living_room', persona: 'suyu', script: 'social_5', action: 'natural', name: '酥鱼', meta: '娱乐主播 · 自嗨热舞', image: '/showroom/avatars/suyu.jpg', outfit: '样板间·酥鱼', voice: 'xiaomei_clone' },
   { industry: 'conversation', scene: 'living_room', persona: 'gaoxiao', script: 'social_5', action: 'natural', name: '抽象搞笑女', meta: '娱乐主播 · 冷开场整活', image: '/showroom/avatars/gaoxiao.jpg', outfit: '样板间·抽象搞笑女', voice: 'female_cheery_i' },
-  { industry: 'conversation', scene: 'living_room', persona: 'xiaomei', script: 'social_5', action: 'natural', name: '小美老师', meta: '穿搭主播 · 幼师转直播', image: '/showroom/avatars/xiaomei.jpg', outfit: '样板间·小美老师', voice: 'xiaomei_clone' },
+  { industry: 'conversation', scene: 'living_room', persona: 'xiaomei', script: 'social_5', action: 'natural', name: '小美老师', meta: '娱乐主播 · 八卦聊天', image: '/showroom/avatars/xiaomei_home.jpg', outfit: '样板间·小美老师·居家', voice: 'xiaomei_clone' },
   { industry: 'social', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '温柔陪伴', meta: '社交直播 · 深夜客厅', image: '/showroom/avatars/social.jpg', outfit: '样板间·温柔陪伴', voice: 'female_tender_e' },
   { industry: 'social', scene: 'living_room', persona: 'sweet_energy', script: 'social_5', action: 'natural', name: '甜美元气', meta: '社交直播 · 甜心互动', image: '/showroom/avatars/sweet.jpg', outfit: '样板间·甜美元气', voice: 'female_lively_d' },
   { industry: 'social', scene: 'living_room', persona: 'funny_playful', script: 'social_5', action: 'lively', name: '搞笑俏皮', meta: '社交直播 · 轻松整活', image: '/showroom/avatars/funny.jpg', outfit: '样板间·搞笑俏皮', voice: 'male_low_a' },
@@ -66,9 +66,9 @@ const OPENINGS = {
     '家人们，为什么直播间没大哥大姐？你们这种不刷礼物的……行吧，陪我聊会儿。',
   ],
   '小美老师': [
-    '宝宝来啦，先坐，今天给你看看我的穿搭。',
-    '不要再说对不起了，你再说对不起，我可要哈出去了。',
-    '我明明很认真的，哪有敷衍二字呀。',
+    '来了宝宝，先坐，今天不讲课，纯聊。',
+    '今天这破天气，适合把前男友挂在外面风干。',
+    '现在网上的热搜，比我奶奶看的家庭伦理剧还精彩。',
   ],
   '温柔陪伴': [
     '来了呀，先坐，慢慢聊。今天不赶流程，先说说你今天过得怎么样，有没有哪一刻特别想找个人说说话？',
@@ -292,7 +292,7 @@ function syncSuyuControls(personaId) {
   controls.hidden = !isSuyu && !isGaoxiao && !isXiaomei;
   if (!controls.hidden) {
     const preset = $('suyuPreset');
-    if (preset) preset.value = isSuyu ? 'suyu' : isXiaomei ? 'xiaomei_clip' : 'hotdance';
+    if (preset) preset.value = isSuyu ? 'suyu' : isXiaomei ? 'xiaomei_chat' : 'hotdance';
   }
 }
 
@@ -323,7 +323,7 @@ async function applyPerson(person, startAfter) {
 
 /* 中控台「酥鱼专属脚本」：自动应用酥鱼形象；设定版自动开播后播放脚本 */
 async function startSuSuPreset(preset, preview = false, useLocalPcm = false) {
-  const personaId = preset === 'hotdance' ? 'gaoxiao' : (preset === 'xiaomei' || preset === 'xiaomei_clip') ? 'xiaomei' : 'suyu';
+  const personaId = preset === 'hotdance' ? 'gaoxiao' : (preset === 'xiaomei' || preset === 'xiaomei_clip' || preset === 'xiaomei_chat') ? 'xiaomei' : 'suyu';
   const person = PEOPLE.find(item => item.persona === personaId);
   if (!person) return;
   status(`${person.name}脚本 · 正在应用形象…`);
