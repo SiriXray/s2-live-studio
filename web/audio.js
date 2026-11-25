@@ -29,6 +29,7 @@ export async function sendPcm(stream, bytes, signal, clock = () => performance.n
     /* WebSocket 发送缓冲积压：等待网络排空，不中断整段音频。 */
     const bufferStarted = clock();
     while ((stream.ws?.bufferedAmount || 0) > 96000) {
+      signal?.throwIfAborted();
       if (clock() - bufferStarted > 10000) throw new Error('网络音频积压超时，请检查上行网络后重试');
       await wait(20);
     }

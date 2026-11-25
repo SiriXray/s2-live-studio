@@ -336,8 +336,23 @@ async function executePlan(plan) {
     bridge.addMessage?.('assistant', `[${plan.persona_name}] ${plan.dialogue.speech_text || plan.dialogue.text}`);
     try {
       if (plan.dialogue.audio) {
-        if (bridge.isReady()) await bridge.speakOut(plan.dialogue.text, plan.dialogue.audio, plan.dialogue.speech_text);
-        else { feed('对话轨 · 直播未连接，仅文本+画面轨演练'); await playLocal(plan.dialogue.audio); }
+        if (bridge.isReady()) {
+          // 单段 TTS 最长 30s；卡住时中断并释放 busy，避免整场停在“正在播报”。
+          let speechTimer;
+          try {
+            await Promise.race([
+              bridge.speakOut(plan.dialogue.text, plan.dialogue.audio, plan.dialogue.speech_text, abort.signal),
+              new Promise((_, reject) => {
+                speechTimer = setTimeout(() => {
+                  abort.abort();
+                  reject(new Error('单段播报超过30秒，已中断'));
+                }, 30000);
+              }),
+            ]);
+          } finally {
+            clearTimeout(speechTimer);
+          }
+        } else { feed('对话轨 · 直播未连接，仅文本+画面轨演练'); await playLocal(plan.dialogue.audio); }
       }
     } catch (error) {
       // 对话轨失败不拖死画面轨：礼物特效/动作照常执行
@@ -1394,6 +1409,7 @@ async function playSuyuScript(mode, preset = 'suyu') {
     suyuScriptPlaying = false;
     previewSubtitle('');
     feed(`${label}脚本 · 播放完成`);
+    window.__scriptedPresetPending = false;
   }
 }
 element('suyuDemo').onclick = () => {
@@ -1445,60 +1461,19 @@ async function playShowroomSequence(sequence) {
 /* 自然对话动作线：按真实开播高频动作排权重，循环下发；复杂动作拆成短指令随机组合。 */
 const NATURAL_ACTION_LINE = [
   { name: '凑近屏幕看弹幕' },
-  { name: '假哭擦泪' },
-  { name: '甩头发' },
-  { name: '翻白眼' },
-  { name: '眨单眼' },
-  { name: '捧脸' },
-  { name: '歪头笑' },
-  { name: '捂嘴偷笑' },
   { name: '整理衣领' },
-  { name: '凑近屏幕看弹幕' },
-  { name: '托腮' },
-  { name: '双手托腮歪头' },
   { name: '拨头发到耳后' },
-  { name: '手背贴脸颊' },
-  { name: '食指竖在唇边' },
-  { name: '单手比耶' },
-  { name: '手指点下巴思考' },
-  { name: '戳脸颊卖萌' },
-  { name: '摸耳垂害羞' },
-  { name: '对手指害羞' },
-  { name: '握拳加油打气' },
-  { name: '拱手作揖感谢' },
-  { name: '飞吻' },
-  { name: '比枪发射爱心' },
-  { name: '手在胸前画心' },
-  { name: '打响指' },
-  { name: '单手捂胸口' },
-  { name: '双手环抱再放开' },
-  { name: '抚摸肩颈' },
-  { name: '甩头发' },
-  { name: '正面抬头微笑' },
-  { name: '抬手挥手打招呼' },
-  { name: '双手胸前轻拍' },
-  { name: '竖起大拇指点赞' },
-  { name: '单手比心' },
-  { name: '双手摊开掌心朝上' },
   { name: '食指朝上点一下' },
-  { name: '五指并拢向下切' },
-  { name: '食指竖胸前' },
-  { name: '拇指食指张开七字' },
-  { name: '一只手比一二三' },
-  { name: '双手胸前转一圈' },
-  { name: '掌心朝前轻推' },
-  { name: '摊手轻耸肩' },
-  { name: '困意揉眼' },
-  { name: '舔唇抿嘴' },
-  { name: '假装生气' },
-  { name: '挤眉弄眼做鬼脸' },
-  { name: '眼神左看右看回镜头' },
-  { name: '双手比耶' },
-  { name: '手背擦汗' },
-  { name: '五指插发梳一次' },
-  { name: '上身左右轻晃' },
+  { name: '单手比心' },
+  { name: '歪头笑' },
+  { name: '扶眼镜' },
+  { name: '捂嘴偷笑' },
+  { name: '凑近屏幕看弹幕' },
+  { name: '整理衣领' },
+  { name: '拨头发到耳后' },
+  { name: '食指朝上点一下' },
 ];
-const ACTION_COMBO = ['甩头发', '凑近屏幕看弹幕', '歪头笑'];
+const ACTION_COMBO = ['整理衣领', '凑近屏幕看弹幕', '歪头笑'];
 let naturalActionTimer = null;
 let naturalActionIndex = 0;
 const recentActions = [];
@@ -1541,6 +1516,7 @@ window.addEventListener('s2-live-ready', async () => {
   // 否则样板间脚本会被误判为“未开播”而不播放，表现为长时间无声/卡住。
   if (!bridge?.isReady?.()) return;
   startNaturalActionLoop();
+  if (window.__scriptedPresetPending) return;
   const sequence = window.__showroomSequence;
   if (sequence) {
     window.__showroomSequence = null;

@@ -1054,7 +1054,7 @@ Promise.all([loadConfig(), loadOutfits(), loadMonet()]).then(async () => {
 
 /* V2 中控台桥接：对话轨（口播+PCM）与画面轨（动作/换装信令）复用直播工作台既有通道。
  * speakOut 可传第三个参数 subtitleText：音频里的拟声标签（如(laughs)）不应出现在 S2 上行口播与字幕中 */
-async function speakOut(text, audioBase64, subtitleText) {
+async function speakOut(text, audioBase64, subtitleText, signal) {
   if (!state.stream?.ready) throw new Error('直播未连接，无法播报');
   // 只有上一段还在播时才需要 type 7；空闲开新段时发 interrupt 会让 S2 多一次无意义复位。
   if (state.speaking) interrupt(false);
@@ -1064,7 +1064,7 @@ async function speakOut(text, audioBase64, subtitleText) {
   hideSubtitle();
   showSubtitle(subtitle);
   try {
-    await sendPcm(state.stream, decodePcm(audioBase64), undefined, undefined, undefined, PCM_FRAME_BYTES, 300);
+    await sendPcm(state.stream, decodePcm(audioBase64), signal, undefined, undefined, PCM_FRAME_BYTES, 300);
   } finally {
     state.speaking = false;
     hideSubtitle();
