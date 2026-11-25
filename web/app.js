@@ -268,7 +268,7 @@ function fillRtcFields() {
 
 function renderVoiceHint() {
   const option = element('voiceProfile').selectedOptions[0];
-  element('voiceProfileHint').textContent = option ? `Soul ${option.dataset.soul} · 回落 ${option.dataset.minimax} · ${option.dataset.hint}` : '';
+  element('voiceProfileHint').textContent = option ? `MiniMax 主音色 ${option.dataset.minimax} · ${option.dataset.hint}` : '';
 }
 
 async function auditionVoice() {
