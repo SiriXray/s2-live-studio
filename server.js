@@ -358,7 +358,7 @@ function createStudio(options = {}) {
       const body = await readJson(request);
       if (creating || sessions.size) return json(response, 409, { error: '已有直播正在创建或运行，请先结束，避免重复计费' });
       const readiness = store.view().readiness;
-      const missing = Object.keys(readiness).filter(key => !readiness[key]);
+      const missing = Object.keys(readiness).filter(key => key !== 'soul' && !readiness[key]);
       if (missing.length) return json(response, 503, { error: `请先配置：${missing.join('、')}` });
       const config = store.load();
       if (body.experience !== undefined && !['studio', 'monet'].includes(body.experience)) throw new Error('交互模式不正确');
