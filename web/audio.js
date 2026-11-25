@@ -17,14 +17,21 @@ export async function sendPcm(stream, bytes, signal, clock = () => performance.n
   if (!bytes.length || bytes.length % 2) throw new Error('PCM16音频长度不合法');
   const start = clock();
   const lead = Math.max(0, Number(leadMs) || 0);
+  let timelineStart = start;
   for (let offset = 0; offset < bytes.length; offset += frameBytes) {
     signal?.throwIfAborted();
-    const due = start + offset / 48 - lead;
+    const due = timelineStart + offset / 48 - lead;
     const delay = due - clock();
     if (delay > 0) await wait(delay);
     signal?.throwIfAborted();
-    if (clock() - due > 500) throw new Error('页面调度延迟过大，已停止播报；请保持直播页在前台');
-    if ((stream.ws?.bufferedAmount || 0) > 48000) throw new Error('网络音频积压，已停止本段播报');
+    /* 长时间本地音频/后台标签页会让页面调度偶尔落后；不直接中断，重新对齐时间轴。 */
+    if (clock() - due > 500) timelineStart = clock() - offset / 48 + lead;
+    /* WebSocket 发送缓冲积压：等待网络排空，不中断整段音频。 */
+    const bufferStarted = clock();
+    while ((stream.ws?.bufferedAmount || 0) > 96000) {
+      if (clock() - bufferStarted > 10000) throw new Error('网络音频积压超时，请检查上行网络后重试');
+      await wait(20);
+    }
     const frame = new Uint8Array(frameBytes);
     frame.set(bytes.subarray(offset, offset + frameBytes));
     if (!stream.sendAudio(frame)) throw new Error('音频通道已断开');

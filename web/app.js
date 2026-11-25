@@ -1081,7 +1081,7 @@ window.S2Bridge = {
     if (state.speaking) interrupt(false);
     state.speaking = true;
     try {
-      await sendPcm(state.stream, pcm, undefined, undefined, undefined, PCM_FRAME_BYTES, 300);
+      await sendPcm(state.stream, pcm, undefined, undefined, undefined, STABLE_FRAME_BYTES, 300);
     } finally {
       state.speaking = false;
     }
