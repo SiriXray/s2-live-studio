@@ -14,6 +14,16 @@ let executing = null; // { abort, priority, planId }
 let lastSpokenAt = Date.now();
 let fallbackBusy = false;
 let suyuScriptPlaying = false;
+let playbackToken = 0;
+function interruptCurrentPlayback() {
+  playbackToken++;
+  if (executing) {
+    try { executing.abort.abort(); } catch {}
+    executing = null;
+  }
+  try { bridge?.interrupt?.(); } catch {}
+  window.SALES_SCRIPT_RUNNING = false;
+}
 const FALLBACK_CHAT_LINES = {
   entertainment: [
     '家人们，刚进来的先把关注点上，点关注不迷路。',
@@ -1043,6 +1053,7 @@ if (localStorage.getItem('s2_avatar_id')) element('mvAvatarId').placeholder = `�
 /* 本地 MP3 → 24k 单声道 PCM → S2 口型；不经过 TTS，可并行 type 9 动作 */
 async function playLocalAudio() {
   if (!bridge?.isRunning?.()) { toast('请先开始直播，再播放本地音频', true); return; }
+  interruptCurrentPlayback();
   const url = element('localAudioUrl').value.trim() || '/voices/local-tts.mp3';
   const withActions = element('localAudioActions').checked;
   try {
@@ -1094,6 +1105,7 @@ window.__playLocalAudio = playLocalAudio;
 
 async function startLocalAudioSinging() {
   if (!bridge?.isRunning?.() || !bridge?.isReady?.()) { toast('请先开始直播并等 S2 首帧，再播放本地音频', true); return; }
+  interruptCurrentPlayback();
   const rawUrl = element('singAudioUrl').value.trim() || '/voices/local-tts.mp3';
   const lyrics = element('singLyrics').value.trim();
   try {
@@ -1157,7 +1169,7 @@ async function fallbackChatter() {
 
 /* 时间+状态触发轮询（冷启动/沉默/才艺锚点/PK拉票/静默小动作）；演唱中暂停主动互动 */
 setInterval(async () => {
-  if (!bridge?.isRunning?.() || singing || window.SALES_SCRIPT_RUNNING) return;
+  if (!bridge?.isRunning?.() || singing || suyuScriptPlaying || window.SALES_SCRIPT_RUNNING) return;
   try {
     const result = await api('/api/interaction/tick', {});
     if (result.plan) { feed(`唤醒触发 · ${result.plan.trigger}`); await executePlan(result.plan); }
@@ -1298,6 +1310,7 @@ function previewSubtitle(text) {
 async function playSuyuScript(mode, preset = 'suyu') {
   const live = mode === 'live';
   if (live && (!bridge?.isRunning?.() || !bridge?.isReady?.())) { toast('直播画面未就绪，请等 S2 首帧后再播放', true); return; }
+  const token = ++playbackToken;
   suyuScriptPlaying = true;
   const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : preset === 'xiaomei_clip' ? XIAOMEI_CLIP_SCRIPT : preset === 'xiaomei' ? XIAOMEI_SCRIPT : SUYU_SCRIPT;
   const label = preset === 'hotdance' ? '抽象搞笑女' : preset === 'xiaomei_clip' ? '小美老师切片' : preset === 'xiaomei' ? '小美老师' : '酥鱼';
@@ -1305,6 +1318,7 @@ async function playSuyuScript(mode, preset = 'suyu') {
   const spokenLines = new Set();
   let lastAction = '';
   for (const item of script) {
+    if (token !== playbackToken) break;
     try {
       const lineText = String(item.text || '').trim();
       if (!lineText || spokenLines.has(lineText)) { feed(`去重跳过：${lineText || '（空行）'}`); continue; }
@@ -1330,9 +1344,11 @@ async function playSuyuScript(mode, preset = 'suyu') {
       break;
     }
   }
-  suyuScriptPlaying = false;
-  previewSubtitle('');
-  feed(`${label}脚本 · 播放完成`);
+  if (token === playbackToken) {
+    suyuScriptPlaying = false;
+    previewSubtitle('');
+    feed(`${label}脚本 · 播放完成`);
+  }
 }
 element('suyuDemo').onclick = () => {
   const persona = document.getElementById('showroomPersona')?.value;
