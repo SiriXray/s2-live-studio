@@ -14,20 +14,59 @@ let executing = null; // { abort, priority, planId }
 let lastSpokenAt = Date.now();
 let fallbackBusy = false;
 let suyuScriptPlaying = false;
-const FALLBACK_CHAT_LINES = [
-  '宝宝们，我刚刚说到哪儿了？你们有没有在听呀。',
-  '今天上海天气有点凉，你们那边呢？',
-  '我最近在看一本很慢的书，翻得很慢，反而舍不得读完。',
-  '前几天看到一幅颜色淡淡的画，会让人安静下来。',
-  '今天突然想吃火锅，但一个人吃又觉得少了点什么。',
-  '你们最近刷到什么停不下来的视频？分享一下。',
-  '如果来上海玩，武康路拍照好看，外滩夜景也值得去。',
-  '有人去过环球影城吗？排队久，但沉浸感真的很强。',
-  '我想换套穿搭，甜一点还是酷一点？帮我选一个。',
-  '我学会一个小妙招：先加冰再倒汽水，气泡会更足。',
-  '你们晚饭吃了吗？没吃的话先去垫一口，我等你。',
-  '有没有人和我一样，晚上就想吃点宵夜。',
-];
+const FALLBACK_CHAT_LINES = {
+  entertainment: [
+    '家人们，刚进来的先把关注点上，点关注不迷路。',
+    '今天这场我准备了好几个整活，你们想先看哪一个？',
+    '弹幕别停，我看到有意思的会直接接。',
+    '觉得今天状态不错的，公屏扣个1让我看看。',
+    '礼物不用刷，陪我聊会儿也是支持。',
+    '你们最近刷到什么好玩的视频？分享一个给我。',
+    '我先自己嗨一会儿，你们负责笑就行。',
+    '直播间人不多也没关系，我把你们一个个记住。',
+  ],
+  education: [
+    '宝宝们，今天这套穿搭的重点在腰线，不是越紧越显瘦。',
+    '选裙子先看面料垂感，再看颜色，最后才看款式。',
+    '小个子可以把上衣塞一点进腰头，比例会立刻不一样。',
+    '微胖女生别怕浅色，关键是版型和露肤的位置。',
+    '梨形身材重点遮胯，A字裙比紧身包臀更稳。',
+    '今天这套是正面和侧面都能看的，我转一下你们对比。',
+    '有宝宝问链接，我先讲清楚适不适合，再给你们找。',
+    '穿搭不是把自己藏起来，是把优点放到镜头前面。',
+  ],
+  lifestyle: [
+    '今天上海天气有点凉，你们那边呢？出门记得带件外套。',
+    '我最近在读一本很慢的书，翻得很慢，反而舍不得读完。',
+    '前几天看到一幅颜色淡淡的画，会让人安静下来。',
+    '今天突然想吃火锅，但一个人吃又觉得少了点什么。',
+    '如果来上海玩，武康路拍照好看，外滩夜景也值得去。',
+    '有人去过环球影城吗？排队久，但沉浸感真的很强。',
+    '晚上容易饿，你们有没有低负担的宵夜推荐？',
+    '我心情不好的时候会洗个热水澡，你们呢？',
+  ],
+};
+let fallbackUsed = new Set();
+let lastFallbackLine = '';
+function fallbackPool() {
+  const persona = document.getElementById('showroomPersona')?.value || '';
+  if (['suyu', 'gaoxiao', 'susu'].includes(persona)) return FALLBACK_CHAT_LINES.entertainment;
+  if (['xiaomei', 'knowledge', 'teacher'].includes(persona)) return FALLBACK_CHAT_LINES.education;
+  return FALLBACK_CHAT_LINES.lifestyle;
+}
+function pickFallbackLine() {
+  const pool = fallbackPool();
+  let fresh = pool.filter(line => line !== lastFallbackLine && !fallbackUsed.has(line));
+  if (!fresh.length) {
+    fallbackUsed.clear();
+    fresh = pool.filter(line => line !== lastFallbackLine);
+  }
+  if (!fresh.length) fresh = pool;
+  const line = fresh[Math.floor(Math.random() * fresh.length)];
+  fallbackUsed.add(line);
+  lastFallbackLine = line;
+  return line;
+}
 let voices = [];      // 音色档案（/api/config.voices）
 let singing = null;   // { abort, session } 实时唱歌会话
 let mvTask = null;    // 最近一次 MV 任务 { task_id, url, state }
@@ -1057,7 +1096,7 @@ async function fallbackChatter() {
   if (fallbackBusy || suyuScriptPlaying || !bridge?.isRunning?.() || singing || executing) return;
   fallbackBusy = true;
   try {
-    const line = FALLBACK_CHAT_LINES[Math.floor(Math.random() * FALLBACK_CHAT_LINES.length)];
+    const line = pickFallbackLine();
     const data = await api('/api/voice/preview', { text: line });
     if (data.audio && bridge.isReady()) {
       lastSpokenAt = Date.now();

@@ -26,7 +26,7 @@ function currentAction() {
 const PEOPLE = [
   { industry: 'conversation', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '自然对话', meta: '自然对话 · 实时互动', image: '/showroom/avatars/social.jpg', outfit: '样板间·温柔陪伴', voice: 'female_tender_e', natural: true },
   { industry: 'conversation', scene: 'living_room', persona: 'susu', script: 'social_5', action: 'natural', name: '苏苏', meta: '萌妹娱乐 · 自然对话', image: '/showroom/avatars/susu.jpg', outfit: '样板间·苏苏', voice: 'female_lively_d', natural: true },
-  { industry: 'conversation', scene: 'living_room', persona: 'suyu', script: 'social_5', action: 'natural', name: '酥鱼', meta: '娱乐主播 · 自嗨热舞', image: '/showroom/avatars/suyu.jpg', outfit: '样板间·酥鱼', voice: 'female_lively_d' },
+  { industry: 'conversation', scene: 'living_room', persona: 'suyu', script: 'social_5', action: 'natural', name: '酥鱼', meta: '娱乐主播 · 自嗨热舞', image: '/showroom/avatars/suyu.jpg', outfit: '样板间·酥鱼', voice: 'xiaomei_clone' },
   { industry: 'conversation', scene: 'living_room', persona: 'gaoxiao', script: 'social_5', action: 'natural', name: '抽象搞笑女', meta: '娱乐主播 · 冷开场整活', image: '/showroom/avatars/gaoxiao.jpg', outfit: '样板间·抽象搞笑女', voice: 'female_cheery_i' },
   { industry: 'conversation', scene: 'living_room', persona: 'xiaomei', script: 'social_5', action: 'natural', name: '小美老师', meta: '穿搭主播 · 幼师转直播', image: '/showroom/avatars/xiaomei.jpg', outfit: '样板间·小美老师', voice: 'xiaomei_clone' },
   { industry: 'social', scene: 'living_room', persona: 'tender_companion', script: 'social_5', action: 'natural', name: '温柔陪伴', meta: '社交直播 · 深夜客厅', image: '/showroom/avatars/social.jpg', outfit: '样板间·温柔陪伴', voice: 'female_tender_e' },
