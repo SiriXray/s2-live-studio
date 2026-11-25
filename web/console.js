@@ -1303,19 +1303,29 @@ const XIAOMEI_CLIP_SCRIPT = [
   { text: '对展示穿搭来的这样吧的形式', actions: ['摊手'] },
 ];
 const XIAOMEI_CHAT_SCRIPT = [
-  { text: '来了宝宝，先坐，今天不讲课，纯聊。', actions: ['扶眼镜', '歪头笑'] },
-  { text: '今天这破天气，适合把前男友挂在外面风干。', actions: ['摊手', '翻白眼'] },
-  { text: '花100块吃了个预制菜，不如小美老师煮的泡面。', actions: ['拍桌', '摇头'] },
-  { text: '旅游搭子比渣男还可怕，他不仅不拍照，还要抱怨门票贵。', actions: ['摊手', '扶额'] },
-  { text: '老板画的饼太大，小美老师建议加点老干妈。', actions: ['比划大饼', '竖大拇指'] },
-  { text: '尊重祝福锁死，千万别放出来祸害别人。', actions: ['双手合十', '摇头'] },
-  { text: '有些亲戚，除了问你工资多少，就不会说别的了。', actions: ['摊手', '歪头'] },
-  { text: '谁规定女孩子必须瘦成闪电？我就喜欢自己像个雷暴。', actions: ['叉腰', '抬下巴'] },
-  { text: '熬最晚的夜，用最贵的眼霜，小美老师教你赛博养生。', actions: ['扶眼镜', '托腮'] },
-  { text: '养猫就像谈恋爱，它负责貌美如花，我负责赚钱养家。', actions: ['双手摊开', '笑'] },
-  { text: '连跪十把，小美老师现在看路边的狗都想给它两巴掌。', actions: ['握拳', '瞪眼'] },
-  { text: '现在网上的热搜，比我奶奶看的家庭伦理剧还精彩。', actions: ['凑近镜头', '挑眉'] },
+  { text: '(chuckle)来了宝宝，先坐，今天不讲课，纯聊。', actions: ['扶眼镜', '歪头笑'] },
+  { text: '(sighs)今天这破天气，适合把前男友挂在外面风干。', actions: ['摊手', '翻白眼'] },
+  { text: '(laughs)花100块吃了个预制菜，不如小美老师煮的泡面。', actions: ['拍桌', '摇头'] },
+  { text: '(gasps)旅游搭子比渣男还可怕，他不仅不拍照，还要抱怨门票贵。', actions: ['摊手', '扶额'] },
+  { text: '(laughs)老板画的饼太大，小美老师建议加点老干妈。', actions: ['比划大饼', '竖大拇指'] },
+  { text: '(chuckle)尊重祝福锁死，千万别放出来祸害别人。', actions: ['双手合十', '摇头'] },
+  { text: '(sighs)有些亲戚，除了问你工资多少，就不会说别的了。', actions: ['摊手', '歪头'] },
+  { text: '(gasps)谁规定女孩子必须瘦成闪电？我就喜欢自己像个雷暴。', actions: ['叉腰', '抬下巴'] },
+  { text: '(emm)熬最晚的夜，用最贵的眼霜，小美老师教你赛博养生。', actions: ['扶眼镜', '托腮'] },
+  { text: '(chuckle)养猫就像谈恋爱，它负责貌美如花，我负责赚钱养家。', actions: ['双手摊开', '笑'] },
+  { text: '(sighs)连跪十把，小美老师现在看路边的狗都想给它两巴掌。', actions: ['握拳', '瞪眼'] },
+  { text: '(laughs)现在网上的热搜，比我奶奶看的家庭伦理剧还精彩。', actions: ['凑近镜头', '挑眉'] },
 ];
+/** 字幕/上行口播不带 Audio Tag；TTS 保留标签。 */
+function cleanSpeech(text) {
+  return String(text || '')
+    .replace(/\((?:laughs|chuckle|sighs|emm|breath|gasps)\)/gi, '，')
+    .replace(/，{2,}/g, '，')
+    .replace(/，([。！？；：])/g, '$1')
+    .replace(/^[，。！？；：\s]+/g, '')
+    .trim();
+}
+
 function previewSubtitle(text) {
   const sub = element('subtitle');
   const line = element('subtitleText');
@@ -1358,9 +1368,9 @@ async function playSuyuScript(mode, preset = 'suyu') {
       let speech;
       if (live) {
         if (!bridge.isReady()) throw new Error('S2 画面未就绪');
-        speech = bridge.speakOut(data.text || item.text, data.audio, data.text || item.text);
+        speech = bridge.speakOut(data.text || item.text, data.audio, cleanSpeech(data.text || item.text));
       } else {
-        previewSubtitle(item.text);
+        previewSubtitle(cleanSpeech(item.text));
         speech = playLocal(data.audio);
       }
       // 台词开始后 180ms 再发动作，边说边动；不阻塞下一句的衔接。
