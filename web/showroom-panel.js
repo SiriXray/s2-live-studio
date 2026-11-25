@@ -322,7 +322,7 @@ async function applyPerson(person, startAfter) {
 }
 
 /* 中控台「酥鱼专属脚本」：自动应用酥鱼形象；设定版自动开播后播放脚本 */
-async function startSuSuPreset(preset, preview = false) {
+async function startSuSuPreset(preset, preview = false, useLocalPcm = false) {
   const personaId = preset === 'hotdance' ? 'gaoxiao' : (preset === 'xiaomei' || preset === 'xiaomei_clip') ? 'xiaomei' : 'suyu';
   const person = PEOPLE.find(item => item.persona === personaId);
   if (!person) return;
@@ -336,15 +336,23 @@ async function startSuSuPreset(preset, preview = false) {
   if (!window.S2Bridge?.isRunning?.()) {
     status(`${person.name}脚本 · 正在开播…`);
     await window.S2Bridge.startLive();
-    for (let i = 0; i < 60 && !window.S2Bridge?.isRunning?.(); i++) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
   }
-  if (!window.S2Bridge?.isRunning?.()) {
+  for (let i = 0; i < 80 && (!window.S2Bridge?.isRunning?.() || !window.S2Bridge?.isReady?.()); i++) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  if (!window.S2Bridge?.isRunning?.() || !window.S2Bridge?.isReady?.()) {
     status(`${person.name}脚本 · 开播未就绪，请手动点「开始直播」后重试`, true);
     return;
   }
-  status(`${person.name}脚本 · 设定版开始播放`);
+  status(`${person.name}脚本 · 真实 S2 已就绪，开始播放`);
+  if (useLocalPcm) {
+    const input = document.getElementById('localAudioUrl');
+    if (input) input.value = '/voices/local-tts.mp3';
+    const actions = document.getElementById('localAudioActions');
+    if (actions) actions.checked = true;
+    window.__playLocalAudio?.();
+    return;
+  }
   window.__playSuyuScript?.('live', preset);
 }
 window.__startSuSuPreset = startSuSuPreset;

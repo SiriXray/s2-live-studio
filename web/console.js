@@ -1090,6 +1090,7 @@ async function playLocalAudio() {
   }
 }
 element('playLocalAudio').onclick = playLocalAudio;
+window.__playLocalAudio = playLocalAudio;
 
 /* 兜底聊天：交互引擎/TTS 异常时也不能只剩动作，保证直播有连续人声 */
 async function fallbackChatter() {
@@ -1251,7 +1252,7 @@ function previewSubtitle(text) {
 }
 async function playSuyuScript(mode, preset = 'suyu') {
   const live = mode === 'live';
-  if (live && !bridge?.isRunning?.()) { toast('设定版需要先开始直播', true); return; }
+  if (live && (!bridge?.isRunning?.() || !bridge?.isReady?.())) { toast('直播画面未就绪，请等 S2 首帧后再播放', true); return; }
   suyuScriptPlaying = true;
   const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : preset === 'xiaomei_clip' ? XIAOMEI_CLIP_SCRIPT : preset === 'xiaomei' ? XIAOMEI_SCRIPT : SUYU_SCRIPT;
   const label = preset === 'hotdance' ? '抽象搞笑女' : preset === 'xiaomei_clip' ? '小美老师切片' : preset === 'xiaomei' ? '小美老师' : '酥鱼';
@@ -1295,10 +1296,11 @@ element('suyuDemo').onclick = () => {
   playSuyuScript(element('scriptMode').value, preset);
 };
 window.__playSuyuScript = playSuyuScript;
-element('presetSuyuLive').onclick = () => window.__startSuSuPreset?.('suyu', element('presetPreview').checked);
-element('presetHotLive').onclick = () => window.__startSuSuPreset?.('hotdance', element('presetPreview').checked);
-element('presetXiaomeiLive').onclick = () => window.__startSuSuPreset?.('xiaomei', element('presetPreview').checked);
-element('presetXiaomeiClipLive').onclick = () => window.__startSuSuPreset?.('xiaomei_clip', element('presetPreview').checked);
+element('presetSuyuLive').onclick = () => window.__startSuSuPreset?.('suyu', false);
+element('presetHotLive').onclick = () => window.__startSuSuPreset?.('hotdance', false);
+element('presetXiaomeiLive').onclick = () => window.__startSuSuPreset?.('xiaomei', false);
+element('presetXiaomeiClipLive').onclick = () => window.__startSuSuPreset?.('xiaomei_clip', false);
+element('presetXiaomeiPcmLive').onclick = () => window.__startSuSuPreset?.('xiaomei_clip', false, true);
 
 /* 画面就绪 → 立即自动开场（不等 cold_start_delay，无需手动开启语音） */
 /* 样板间脚本：开场白 + 3 条主动口播，段间固定 2 秒 */
