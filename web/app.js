@@ -1086,6 +1086,7 @@ window.S2Bridge = {
       state.speaking = false;
     }
   },
+  sendOutputText: text => state.stream?.sendOutputText(text) || false,
   interrupt: () => interrupt(false),
   // 礼物即时动效：叠在直播画面上的轻量全屏特效（不依赖离线任务，零延迟）
   giftOverlay: (giftName, tier, iconOverride) => {

@@ -1092,6 +1092,51 @@ async function playLocalAudio() {
 element('playLocalAudio').onclick = playLocalAudio;
 window.__playLocalAudio = playLocalAudio;
 
+async function startLocalAudioSinging() {
+  if (!bridge?.isRunning?.() || !bridge?.isReady?.()) { toast('请先开始直播并等 S2 首帧，再播放本地音频', true); return; }
+  const rawUrl = element('singAudioUrl').value.trim() || '/voices/local-tts.mp3';
+  const lyrics = element('singLyrics').value.trim();
+  try {
+    feed(`本地开唱 · 读取 ${rawUrl}`);
+    const fetchUrl = /^https?:\/\//i.test(rawUrl) ? `/api/audio/fetch?url=${encodeURIComponent(rawUrl)}` : rawUrl;
+    const response = await fetch(fetchUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const buffer = await response.arrayBuffer();
+    const ctx = new AudioContext();
+    const decoded = await ctx.decodeAudioData(buffer.slice(0));
+    await ctx.close();
+    const rate = 24000;
+    const frames = Math.max(1, Math.ceil(decoded.duration * rate));
+    const offline = new OfflineAudioContext(1, frames, rate);
+    const source = offline.createBufferSource();
+    source.buffer = decoded;
+    source.connect(offline.destination);
+    source.start(0);
+    const rendered = await offline.startRendering();
+    const floats = rendered.getChannelData(0);
+    const pcm = new Uint8Array(floats.length * 2);
+    const view = new DataView(pcm.buffer);
+    for (let i = 0; i < floats.length; i++) {
+      const s = Math.max(-1, Math.min(1, floats[i]));
+      view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    }
+    singing = true;
+    suyuScriptPlaying = true;
+    if (lyrics && bridge.sendOutputText) bridge.sendOutputText(lyrics.slice(0, 500));
+    feed(`本地开唱 · ${decoded.duration.toFixed(1)}s，24k PCM 对口型`);
+    await bridge.sendPcmRaw(pcm);
+    bridge.baselineReset?.();
+    feed('本地开唱 · 完成，已复位');
+  } catch (error) {
+    feed(`本地开唱失败：${error.message}`, 'err');
+    toast(`本地开唱失败：${error.message}`, true);
+  } finally {
+    singing = false;
+    suyuScriptPlaying = false;
+  }
+}
+element('singLocalStart').onclick = startLocalAudioSinging;
+
 /* 兜底聊天：交互引擎/TTS 异常时也不能只剩动作，保证直播有连续人声 */
 async function fallbackChatter() {
   if (fallbackBusy || suyuScriptPlaying || !bridge?.isRunning?.() || singing || executing) return;

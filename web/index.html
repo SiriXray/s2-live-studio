@@ -206,6 +206,9 @@
       <section class="drawer-section" aria-labelledby="csGen"><h3 id="csGen">现场生成 <span class="tag">实时调接口</span></h3>
         <h4 class="sub">唱歌 / 跳舞</h4>
         <div class="sim-row"><label for="singMusic" class="visually-hidden">曲目</label><select id="singMusic"></select><button id="reloadMusic" class="square" aria-label="刷新曲目">↻</button></div>
+        <label for="singAudioUrl">本地音频链接（MP3 → PCM 对口型）</label><input id="singAudioUrl" placeholder="https://scene-aliyun.vidu.zone/media-asset/....mp3 或 /voices/local-tts.mp3">
+        <label for="singLyrics">歌词文本（可选，随唱做表情）</label><textarea id="singLyrics" rows="2" placeholder="粘贴歌词；不填则只对口型"></textarea>
+        <div class="sim-row"><button id="singLocalStart" class="primary">▶ 本地音频开唱</button></div>
         <div class="sim-row">
           <button id="singStart" class="primary">实时开唱</button>
           <button id="singStop" class="secondary" disabled>停止</button>

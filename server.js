@@ -857,6 +857,21 @@ function createStudio(options = {}) {
       } finally { turning = false; }
       return;
     }
+    if (request.method === 'GET' && pathname === '/api/audio/fetch') {
+      const target = String(url.searchParams.get('url') || '');
+      let parsed;
+      try { parsed = new URL(target); } catch { throw Object.assign(new Error('音频链接不正确'), { status: 400 }); }
+      if (!['scene-aliyun.vidu.zone', 'scene.vidu.zone'].includes(parsed.hostname)) {
+        throw Object.assign(new Error('仅允许 Vidu 素材域音频'), { status: 400 });
+      }
+      const upstream = await fetch(parsed, { signal: AbortSignal.timeout(120000), redirect: 'follow' });
+      if (!upstream.ok) throw new Error(`音频下载失败 HTTP ${upstream.status}`);
+      const buffer = Buffer.from(await upstream.arrayBuffer());
+      if (buffer.length > 20 * 1024 * 1024) throw new Error('音频超过 20MB');
+      response.writeHead(200, { 'Content-Type': upstream.headers.get('content-type') || 'audio/mpeg', 'Content-Length': buffer.length, 'Cache-Control': 'no-store' });
+      response.end(buffer);
+      return;
+    }
     if (pathname.startsWith('/api/')) return json(response, 404, { error: '接口不存在' });
     if (request.method !== 'GET') return json(response, 405, { error: '仅支持GET' });
     const relative = decodeURIComponent(pathname === '/' ? '/index.html' : pathname);
