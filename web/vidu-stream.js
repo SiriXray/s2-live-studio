@@ -223,6 +223,11 @@ export class ViduStream {
     return this._sendSignal(SIG.AUDIO_INTERRUPTED, {});
   }
 
+  /** 会话级开关：本地 PCM 驱动期间关闭 llm/tts/vad，退出时恢复。 */
+  sessionUpdate(enabled) {
+    return this._sendSignal(97, { session_update: { llm: Boolean(enabled), tts: Boolean(enabled), vad: Boolean(enabled) } });
+  }
+
   switchPrompt(image, editingType) {
     if (!this.ready || !['virtual_tryon', 'style_transfer', 'subject_replacement', 'background_replacement'].includes(editingType)) return false;
     return this._sendSignal(13, { switch_prompt: { prompts: [{ type: 'image', content: image }], editing_type: editingType } });

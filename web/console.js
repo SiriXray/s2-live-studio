@@ -15,8 +15,12 @@ let lastSpokenAt = Date.now();
 let fallbackBusy = false;
 let suyuScriptPlaying = false;
 let playbackToken = 0;
+let localAudioAbort = null;
+let localRunToken = 0;
 function interruptCurrentPlayback() {
   playbackToken++;
+  localRunToken++;
+  if (localAudioAbort) { try { localAudioAbort.abort(); } catch {} localAudioAbort = null; }
   if (executing) {
     try { executing.abort.abort(); } catch {}
     executing = null;
@@ -1051,53 +1055,86 @@ element('i2vCreate').onclick = createI2v;
 if (localStorage.getItem('s2_avatar_id')) element('mvAvatarId').placeholder = `上次使用：${localStorage.getItem('s2_avatar_id')}`;
 
 /* 本地 MP3 → 24k 单声道 PCM → S2 口型；不经过 TTS，可并行 type 9 动作 */
-async function playLocalAudio() {
-  if (!bridge?.isRunning?.()) { toast('请先开始直播，再播放本地音频', true); return; }
+async function loadPcm24k(rawUrl) {
+  const fetchUrl = /^https?:\/\//i.test(rawUrl) ? `/api/audio/fetch?url=${encodeURIComponent(rawUrl)}` : rawUrl;
+  const response = await fetch(fetchUrl);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const buffer = await response.arrayBuffer();
+  const ctx = new AudioContext();
+  const decoded = await ctx.decodeAudioData(buffer.slice(0));
+  await ctx.close();
+  if (!decoded.duration || !Number.isFinite(decoded.duration)) throw new Error('音频时长无效');
+  const rate = 24000;
+  const frames = Math.max(1, Math.ceil(decoded.duration * rate));
+  const offline = new OfflineAudioContext(1, frames, rate);
+  const source = offline.createBufferSource();
+  source.buffer = decoded;
+  source.connect(offline.destination);
+  source.start(0);
+  const rendered = await offline.startRendering();
+  const floats = rendered.getChannelData(0);
+  const pcm = new Uint8Array(floats.length * 2);
+  const view = new DataView(pcm.buffer);
+  for (let i = 0; i < floats.length; i++) {
+    const s = Math.max(-1, Math.min(1, floats[i]));
+    view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return { pcm, duration: decoded.duration };
+}
+
+async function runLocalPcm(pcm, { label, lyrics = '', withActions = false }) {
   interruptCurrentPlayback();
-  const url = element('localAudioUrl').value.trim() || '/voices/local-tts.mp3';
-  const withActions = element('localAudioActions').checked;
+  const runToken = ++localRunToken;
+  const controller = new AbortController();
+  localAudioAbort = controller;
+  suyuScriptPlaying = true;
+  if (label === '本地开唱') singing = true;
   try {
-    feed(`本地音频 · 正在读取 ${url}`);
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const buffer = await response.arrayBuffer();
-    const ctx = new AudioContext();
-    const decoded = await ctx.decodeAudioData(buffer.slice(0));
-    await ctx.close();
-    const rate = 24000;
-    const frames = Math.max(1, Math.ceil(decoded.duration * rate));
-    const offline = new OfflineAudioContext(1, frames, rate);
-    const source = offline.createBufferSource();
-    source.buffer = decoded;
-    source.connect(offline.destination);
-    source.start(0);
-    const rendered = await offline.startRendering();
-    const floats = rendered.getChannelData(0);
-    const pcm = new Uint8Array(floats.length * 2);
-    const view = new DataView(pcm.buffer);
-    for (let i = 0; i < floats.length; i++) {
-      const s = Math.max(-1, Math.min(1, floats[i]));
-      view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-    }
-    feed(`本地音频 · ${decoded.duration.toFixed(1)}s → 24k PCM，开始对口型`);
-    suyuScriptPlaying = true;
+    // 先关会话自主链路，再打断并复位；硬切后等待 300ms，避免双轨。
+    bridge.setInteractive?.(false);
+    bridge.baselineReset?.();
+    await sleep(300);
+    if (lyrics && bridge.sendOutputText) bridge.sendOutputText(lyrics.slice(0, 500));
+    feed(`${label} · 24k PCM 开始对口型`);
     let done = false;
-    const playing = bridge.sendPcmRaw(pcm).finally(() => { done = true; });
+    const playing = bridge.sendPcmRaw(pcm, controller.signal).finally(() => { done = true; });
     if (withActions) {
       await sleep(1200);
-      while (!done && bridge.isRunning()) {
+      while (!done && bridge.isRunning() && !controller.signal.aborted) {
         const name = pickFreshAction();
         if (bridge.sendAction(name)) feed(`画面轨 · 本地音频同步动作：${name}`);
         await sleep(3500);
       }
     }
     await playing;
-    feed('本地音频 · 播放完成');
+    // 200ms 静音收尾，避免口型戛然而止。
+    bridge.sendPcmRaw(new Uint8Array(9600)).catch(() => {});
+    await sleep(220);
+    feed(`${label} · 播放完成`);
+  } finally {
+    if (localAudioAbort === controller) localAudioAbort = null;
+    if (runToken === localRunToken) {
+      suyuScriptPlaying = false;
+      singing = false;
+      bridge.baselineReset?.();
+      bridge.setInteractive?.(true);
+      await sleep(400);
+    }
+  }
+}
+
+async function playLocalAudio() {
+  if (!bridge?.isRunning?.()) { toast('请先开始直播，再播放本地音频', true); return; }
+  const url = element('localAudioUrl').value.trim() || '/voices/local-tts.mp3';
+  const withActions = element('localAudioActions').checked;
+  try {
+    feed(`本地音频 · 预加载 ${url}`);
+    const { pcm, duration } = await loadPcm24k(url);
+    feed(`本地音频 · 预加载成功 ${duration.toFixed(1)}s`);
+    await runLocalPcm(pcm, { label: '本地音频', withActions });
   } catch (error) {
     feed(`本地音频失败：${error.message}`, 'err');
     toast(`本地音频失败：${error.message}`, true);
-  } finally {
-    suyuScriptPlaying = false;
   }
 }
 element('playLocalAudio').onclick = playLocalAudio;
@@ -1105,46 +1142,17 @@ window.__playLocalAudio = playLocalAudio;
 
 async function startLocalAudioSinging() {
   if (!bridge?.isRunning?.() || !bridge?.isReady?.()) { toast('请先开始直播并等 S2 首帧，再播放本地音频', true); return; }
-  interruptCurrentPlayback();
   const rawUrl = element('singAudioUrl').value.trim() || '/voices/local-tts.mp3';
   const lyrics = element('singLyrics').value.trim();
   try {
-    feed(`本地开唱 · 读取 ${rawUrl}`);
-    const fetchUrl = /^https?:\/\//i.test(rawUrl) ? `/api/audio/fetch?url=${encodeURIComponent(rawUrl)}` : rawUrl;
-    const response = await fetch(fetchUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const buffer = await response.arrayBuffer();
-    const ctx = new AudioContext();
-    const decoded = await ctx.decodeAudioData(buffer.slice(0));
-    await ctx.close();
-    const rate = 24000;
-    const frames = Math.max(1, Math.ceil(decoded.duration * rate));
-    const offline = new OfflineAudioContext(1, frames, rate);
-    const source = offline.createBufferSource();
-    source.buffer = decoded;
-    source.connect(offline.destination);
-    source.start(0);
-    const rendered = await offline.startRendering();
-    const floats = rendered.getChannelData(0);
-    const pcm = new Uint8Array(floats.length * 2);
-    const view = new DataView(pcm.buffer);
-    for (let i = 0; i < floats.length; i++) {
-      const s = Math.max(-1, Math.min(1, floats[i]));
-      view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-    }
-    singing = true;
-    suyuScriptPlaying = true;
-    if (lyrics && bridge.sendOutputText) bridge.sendOutputText(lyrics.slice(0, 500));
-    feed(`本地开唱 · ${decoded.duration.toFixed(1)}s，24k PCM 对口型`);
-    await bridge.sendPcmRaw(pcm);
-    bridge.baselineReset?.();
-    feed('本地开唱 · 完成，已复位');
+    feed(`本地开唱 · 预加载 ${rawUrl}`);
+    // 预加载失败时不动当前播报，避免“停了话又没音”。
+    const { pcm, duration } = await loadPcm24k(rawUrl);
+    feed(`本地开唱 · 预加载成功 ${duration.toFixed(1)}s`);
+    await runLocalPcm(pcm, { label: '本地开唱', lyrics });
   } catch (error) {
     feed(`本地开唱失败：${error.message}`, 'err');
     toast(`本地开唱失败：${error.message}`, true);
-  } finally {
-    singing = false;
-    suyuScriptPlaying = false;
   }
 }
 element('singLocalStart').onclick = startLocalAudioSinging;
