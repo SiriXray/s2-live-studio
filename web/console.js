@@ -1322,33 +1322,47 @@ async function playSuyuScript(mode, preset = 'suyu') {
   suyuScriptPlaying = true;
   const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : preset === 'xiaomei_clip' ? XIAOMEI_CLIP_SCRIPT : preset === 'xiaomei' ? XIAOMEI_SCRIPT : SUYU_SCRIPT;
   const label = preset === 'hotdance' ? '抽象搞笑女' : preset === 'xiaomei_clip' ? '小美老师切片' : preset === 'xiaomei' ? '小美老师' : '酥鱼';
-  feed(`${label}脚本 · ${live ? '设定版（1.1× 真实开播）' : '预演版（不推流）'} 开始`);
-  const spokenLines = new Set();
-  let lastAction = '';
+  feed(`${label}脚本 · ${live ? '设定版（1.05× 真实开播）' : '预演版（不推流）'} 开始`);
+  const items = [];
+  const seen = new Set();
   for (const item of script) {
+    const text = String(item.text || '').trim();
+    if (!text || seen.has(text)) { feed(`去重跳过：${text || '（空行）'}`); continue; }
+    seen.add(text);
+    items.push({ ...item, text });
+  }
+  const fetchTts = text => api('/api/voice/preview', { text });
+  let nextAudio = items.length ? fetchTts(items[0].text) : null;
+  let lastAction = '';
+  for (let index = 0; index < items.length; index++) {
     if (token !== playbackToken) break;
     try {
-      const lineText = String(item.text || '').trim();
-      if (!lineText || spokenLines.has(lineText)) { feed(`去重跳过：${lineText || '（空行）'}`); continue; }
-      spokenLines.add(lineText);
-      const data = await api('/api/voice/preview', { text: lineText });
+      const item = items[index];
+      const data = await nextAudio;
+      // 当前句开始播放前，先把下一句 TTS 预取好，句间不再等合成。
+      if (index + 1 < items.length) nextAudio = fetchTts(items[index + 1].text);
+      let speech;
       if (live) {
-        if (bridge.isReady()) await bridge.speakOut(data.text || lineText, data.audio, data.text || lineText);
+        if (!bridge.isReady()) throw new Error('S2 画面未就绪');
+        speech = bridge.speakOut(data.text || item.text, data.audio, data.text || item.text);
       } else {
-        previewSubtitle(lineText);
-        await playLocal(data.audio);
+        previewSubtitle(item.text);
+        speech = playLocal(data.audio);
       }
-      lastSpokenAt = Date.now();
+      // 台词开始后 180ms 再发动作，边说边动；不阻塞下一句的衔接。
+      await sleep(180);
       for (const action of item.actions || []) {
         if (action === lastAction) continue;
         lastAction = action;
         if (live) { if (bridge.sendAction(action)) feed(`画面轨 · ${action}`); }
         else feed(`动作（预演）· ${action}`);
-        await sleep(600);
+        await sleep(520);
       }
-      await sleep(live ? 300 : 500);
+      await speech;
+      lastSpokenAt = Date.now();
+      await sleep(60);
     } catch (error) {
-      feed(`酥鱼脚本中断：${error.message}`, 'err');
+      feed(`${label}脚本中断：${error.message}`, 'err');
       break;
     }
   }

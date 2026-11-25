@@ -1,4 +1,4 @@
-{
+﻿{
   "vidu": {
     "api_key": "",
     "host": "api.vidu.cn"
@@ -30,14 +30,14 @@
     "api_key": "",
     "model": "speech-2.8-turbo",
     "voice_id": "female-shaonv",
-    "speed": 1.1
+    "speed": 1.05
   },
   "soul": {
     "api_key": "",
     "model": "loxi-speech-1.0",
     "base_url": "https://api.loxinity.com",
     "voice_id": "",
-    "speed": 1.1
+    "speed": 1.05
   },
   "vlm": {
     "api_key": "",
@@ -45,12 +45,12 @@
     "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
   },
   "singing": {
-    "music_dir": "D:/音乐AI MV Agent/音乐音频",
+    "music_dir": "D:/闊充箰AI MV Agent/闊充箰闊抽",
     "default_avatar_id": ""
   },
   "live": {
     "image_uri": "",
-    "persona": "你是一位自然、友好的中文直播主持人。直接回答观众的问题，每次回复不超过100字，适合口播。不编造商品信息。不用Markdown。"
+    "persona": "浣犳槸涓€浣嶈嚜鐒躲€佸弸濂界殑涓枃鐩存挱涓绘寔浜恒€傜洿鎺ュ洖绛旇浼楃殑闂锛屾瘡娆″洖澶嶄笉瓒呰繃100瀛楋紝閫傚悎鍙ｆ挱銆備笉缂栭€犲晢鍝佷俊鎭€備笉鐢∕arkdown銆?
   },
   "s2": {
     "model": "vidu-s2",
@@ -75,7 +75,7 @@
       "dance": {
         "segment_seconds": 2,
         "bridge_action": true,
-        "bridge_text": "面向镜头微笑"
+        "bridge_text": "闈㈠悜闀滃ご寰瑧"
       },
       "idle": {
         "interval_s": 12,
