@@ -323,7 +323,7 @@ async function applyPerson(person, startAfter) {
 
 /* 中控台「酥鱼专属脚本」：自动应用酥鱼形象；设定版自动开播后播放脚本 */
 async function startSuSuPreset(preset, preview = false, useLocalPcm = false) {
-  window.__scriptedPresetPending = preset !== 'xiaomei_chat';
+  window.__scriptedPresetPending = true;
   const personaId = preset === 'hotdance' ? 'gaoxiao' : (preset === 'xiaomei' || preset === 'xiaomei_clip' || preset === 'xiaomei_chat') ? 'xiaomei' : 'suyu';
   const person = PEOPLE.find(item => item.persona === personaId);
   if (!person) return;
@@ -346,7 +346,7 @@ async function startSuSuPreset(preset, preview = false, useLocalPcm = false) {
     return;
   }
   status(`${person.name}脚本 · 真实 S2 已就绪，开始播放`);
-  if (preset === 'xiaomei_chat') { window.__scriptedPresetPending = false; return; }
+  if (preset === 'xiaomei_chat') { window.__playXiaomeiSegments?.(); return; }
   if (useLocalPcm) {
     const input = document.getElementById('localAudioUrl');
     if (input) input.value = '/voices/local-tts.mp3';

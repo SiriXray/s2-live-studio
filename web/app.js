@@ -605,10 +605,10 @@ async function sendTurn(text) {
     state.history.push({ role: 'user', content: text }, { role: 'assistant', content: result.text }); state.history = state.history.slice(-20);
     addMessage('assistant', result.text);
     element('llmStatus').textContent = '调用成功'; element('minimaxStatus').textContent = '合成成功';
-    showSubtitle(result.text);
+    showSubtitle(cleanSubtitleText(result.text));
     element('turnStatus').textContent = '主播播报中…';
     log(`回复生成 ${(performance.now() - started).toFixed(0)}ms；音频 ${Math.round(result.duration_ms)}ms`);
-    if (!state.stream.sendOutputText(result.text)) throw new Error('回复文本发送失败');
+    if (!state.stream.sendOutputText(cleanSubtitleText(result.text))) throw new Error('回复文本发送失败');
     await sendPcm(state.stream, decodePcm(result.audio), controller.signal);
     element('turnStatus').textContent = '可以继续说';
   } catch (error) {
@@ -739,11 +739,11 @@ async function performMonet(result, signal) {
   if (result.text) {
     addMessage('assistant', result.text);
     state.history.push({ role: 'assistant', content: result.text }); state.history = state.history.slice(-20);
-    showSubtitle(result.text);
+    showSubtitle(cleanSubtitleText(result.text));
     element('turnStatus').textContent = '莫奈正在回应…';
     if (result.needs_llm) element('llmStatus').textContent = '自然对话生成成功';
     element('minimaxStatus').textContent = '合成成功';
-    if (!state.stream.sendOutputText(result.text)) throw new Error('莫奈口播文本发送失败');
+    if (!state.stream.sendOutputText(cleanSubtitleText(result.text))) throw new Error('莫奈口播文本发送失败');
     await sendPcm(state.stream, decodePcm(result.audio), signal);
   } else if (action) {
     await sendPcm(state.stream, new Uint8Array(action.hold_ms * 48), signal);
@@ -1054,12 +1054,20 @@ Promise.all([loadConfig(), loadOutfits(), loadMonet()]).then(async () => {
 
 /* V2 中控台桥接：对话轨（口播+PCM）与画面轨（动作/换装信令）复用直播工作台既有通道。
  * speakOut 可传第三个参数 subtitleText：音频里的拟声标签（如(laughs)）不应出现在 S2 上行口播与字幕中 */
+function cleanSubtitleText(text) {
+  return String(text || '')
+    .replace(/\((?:laughs|chuckle|sighs|emm|breath|gasps)\)/gi, '，')
+    .replace(/，{2,}/g, '，')
+    .replace(/^[，。！？；：\s]+/g, '')
+    .trim();
+}
+
 async function speakOut(text, audioBase64, subtitleText, signal) {
   if (!state.stream?.ready) throw new Error('直播未连接，无法播报');
   // 只有上一段还在播时才需要 type 7；空闲开新段时发 interrupt 会让 S2 多一次无意义复位。
   if (state.speaking) interrupt(false);
   state.speaking = true;
-  const subtitle = subtitleText || text;
+  const subtitle = cleanSubtitleText(subtitleText || text);
   if (!state.stream.sendOutputText(subtitle)) { state.speaking = false; throw new Error('口播文本发送失败'); }
   hideSubtitle();
   showSubtitle(subtitle);

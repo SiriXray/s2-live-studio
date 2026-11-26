@@ -7,6 +7,7 @@
  */
 const bridge = window.S2Bridge;
 import { sendPcm } from './audio.js';
+import { XIAOMEI_SEGMENTS, XIAOMEI_WEIGHTS } from './xiaomei-segments.js';
 const element = id => document.getElementById(id);
 const TIER_BADGE = { 0: 'P0', 1: 'P1', 2: 'P2', 3: 'P3', 4: 'P4', 5: 'P5' };
 let manifest = null;
@@ -1400,6 +1401,7 @@ async function playSuyuScript(mode, preset = 'suyu') {
         await sleep(520);
       }
       await speech;
+      feed(`小美口播 · ${segment.theme} 完成`);
       lastSpokenAt = Date.now();
       await sleep(60);
     } catch (error) {
@@ -1414,6 +1416,53 @@ async function playSuyuScript(mode, preset = 'suyu') {
     window.__scriptedPresetPending = false;
   }
 }
+async function playXiaomeiSegments() {
+  if (!bridge?.isRunning?.() || !bridge?.isReady?.()) { toast('直播画面未就绪，不能播放小美口播', true); return; }
+  interruptCurrentPlayback();
+  const token = ++playbackToken;
+  suyuScriptPlaying = true;
+  window.__scriptedPresetPending = true;
+  try {
+    for (const segment of XIAOMEI_SEGMENTS) {
+      if (token !== playbackToken) break;
+      const data = await api('/api/voice/preview', { text: segment.text });
+      if (!data.audio) throw new Error('TTS 未返回音频');
+      feed(`小美口播 · ${segment.theme} · 5 句一段`);
+      const speech = bridge.speakOut(data.text || segment.text, data.audio, cleanSpeech(data.text || segment.text));
+      let binary;
+      try { binary = atob(String(data.audio || '')); } catch { binary = ''; }
+      const audioMs = binary.length ? binary.length / 48 : 30000;
+      const lengths = (segment.lines || []).map(line => Math.max(1, cleanSpeech(line).length));
+      const totalChars = lengths.reduce((a, b) => a + b, 0) || 1;
+      let walked = 0;
+      const starts = lengths.map(len => { const at = audioMs * walked / totalChars; walked += len; return at; });
+      const cues = (segment.cues || []).map(cue => ({
+        ...cue,
+        at: Math.min(audioMs - 100, (starts[Math.max(0, (cue.line || 1) - 1)] || 0) + Number(cue.delay_ms || 0)),
+      })).sort((a, b) => a.at - b.at);
+      let elapsed = 0;
+      for (const cue of cues) {
+        await sleep(Math.max(0, cue.at - elapsed));
+        elapsed = cue.at;
+        if (token !== playbackToken) break;
+        if (bridge.isRunning()) { bridge.sendAction(cue.action); feed(`画面轨 · 台词动作：${cue.action}`); }
+      }
+      await speech;
+      lastSpokenAt = Date.now();
+      await sleep(260);
+    }
+  } catch (error) {
+    feed(`小美口播失败：${error.message}`, 'err');
+  } finally {
+    if (token === playbackToken) {
+      suyuScriptPlaying = false;
+      window.__scriptedPresetPending = false;
+      feed('小美口播 · 本轮 6 段完成');
+    }
+  }
+}
+window.__playXiaomeiSegments = playXiaomeiSegments;
+
 element('suyuDemo').onclick = () => {
   const persona = document.getElementById('showroomPersona')?.value;
   if (!['suyu', 'gaoxiao', 'xiaomei'].includes(persona)) { toast('专属脚本只绑定对应人设，请先选择对应人物', true); return; }
@@ -1455,7 +1504,7 @@ async function playShowroomSequence(sequence) {
     if (index + 1 < lines.length) next = fetchLine(lines[index + 1]);
     if (token.cancelled) break;
     feed(`样板间 · ${sequence.name} 口播 ${index + 1}/${lines.length}：${current.text.slice(0, 22)}…`);
-    await bridge.speakOut(current.text, current.audio, current.text);
+    await bridge.speakOut(current.text, current.audio, cleanSpeech(current.text));
     if (index < lines.length - 1) await sleep(2000);
   }
   if (showroomSequenceToken === token) showroomSequenceToken = null;
@@ -1465,35 +1514,42 @@ async function playShowroomSequence(sequence) {
 /* 自然对话动作线：按真实开播高频动作排权重，循环下发；复杂动作拆成短指令随机组合。 */
 const NATURAL_ACTION_LINE = [
   { name: '凑近屏幕看弹幕' },
-  { name: '整理衣领' },
-  { name: '拨头发到耳后' },
-  { name: '食指朝上点一下' },
-  { name: '单手比心' },
-  { name: '歪头笑' },
-  { name: '扶眼镜' },
+  { name: '戳屏幕逗观众' },
   { name: '捂嘴偷笑' },
-  { name: '凑近屏幕看弹幕' },
-  { name: '整理衣领' },
   { name: '拨头发到耳后' },
+  { name: '笑' },
+  { name: '撒娇卖萌' },
+  { name: '捧脸' },
   { name: '食指朝上点一下' },
+  { name: '扶额' },
+  { name: '托腮' },
+  { name: '整理衣领' },
+  { name: '面对镜头挥手' },
 ];
-const ACTION_COMBO = ['整理衣领', '凑近屏幕看弹幕', '歪头笑'];
+const ACTION_COMBO = ['整理衣领', '凑近屏幕看弹幕', '捂嘴偷笑'];
 let naturalActionTimer = null;
 let naturalActionIndex = 0;
 const recentActions = [];
 function pickFreshAction() {
   let pool = NATURAL_ACTION_LINE.filter(step => !recentActions.includes(step.name));
   if (!pool.length) { recentActions.length = 0; pool = NATURAL_ACTION_LINE; }
-  const step = pool[Math.floor(Math.random() * pool.length)];
-  recentActions.push(step.name);
+  const total = pool.reduce((sum, step) => sum + Math.max(0, Number(XIAOMEI_WEIGHTS[step.name]) || 1), 0);
+  let roll = Math.random() * total;
+  let picked = pool[pool.length - 1];
+  for (const step of pool) {
+    roll -= Math.max(0, Number(XIAOMEI_WEIGHTS[step.name]) || 1);
+    if (roll <= 0) { picked = step; break; }
+  }
+  recentActions.push(picked.name);
   if (recentActions.length > 8) recentActions.shift();
-  return step.name;
+  return picked.name;
 }
 function startNaturalActionLoop() {
   if (naturalActionTimer) return;
   naturalActionIndex = 0;
   naturalActionTimer = setInterval(() => {
     if (!bridge?.isRunning?.()) { stopNaturalActionLoop(); return; }
+    if (suyuScriptPlaying) return;
     if (naturalActionIndex % 7 === 0) {
       const combo = ACTION_COMBO.filter(action => !recentActions.includes(action));
       const parts = combo.length ? combo : ACTION_COMBO;
