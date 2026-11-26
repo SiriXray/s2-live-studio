@@ -1178,7 +1178,7 @@ async function fallbackChatter() {
   if (fallbackBusy || suyuScriptPlaying || !bridge?.isRunning?.() || singing || executing) return;
   fallbackBusy = true;
   try {
-    const line = pickFallbackLine();
+    const line = [pickFallbackLine(), pickFallbackLine(), pickFallbackLine(), pickFallbackLine()].filter(Boolean).join(' ');
     const data = await api('/api/voice/preview', { text: line });
     if (data.audio && bridge.isReady()) {
       lastSpokenAt = Date.now();
@@ -1376,15 +1376,12 @@ async function playSuyuScript(mode, preset = 'suyu') {
     items.push({ ...item, text });
   }
   const fetchTts = text => api('/api/voice/preview', { text });
-  let nextAudio = items.length ? fetchTts(items[0].text) : null;
   let lastAction = '';
   for (let index = 0; index < items.length; index++) {
     if (token !== playbackToken) break;
     try {
       const item = items[index];
-      const data = await nextAudio;
-      // 当前句开始播放前，先把下一句 TTS 预取好，句间不再等合成。
-      if (index + 1 < items.length) nextAudio = fetchTts(items[index + 1].text);
+      const data = await fetchTts(item.text);
       let speech;
       if (live) {
         if (!bridge.isReady()) throw new Error('S2 画面未就绪');
