@@ -306,6 +306,7 @@ async function pollEffect(taskId, attempt = 0, full = false) {
 }
 
 async function executePlan(plan) {
+  if (suyuScriptPlaying) { feed(`脚本播放中 · 丢弃自动计划「${plan.trigger || plan.intent}」`); return; }
   const priority = plan.priority ?? 3;
   lastSpokenAt = Date.now();
   // 礼物到达：先叠一层即时礼物动效（零延迟），礼物特效任务在后台真实生成（绕过 dry_run），完成后覆盖播放
@@ -1191,8 +1192,10 @@ async function fallbackChatter() {
 }
 
 /* 时间+状态触发轮询（冷启动/沉默/才艺锚点/PK拉票/静默小动作）；演唱中暂停主动互动 */
+let tickInFlight = false;
 setInterval(async () => {
-  if (!bridge?.isRunning?.() || singing || suyuScriptPlaying || window.SALES_SCRIPT_RUNNING) return;
+  if (tickInFlight || !bridge?.isRunning?.() || singing || suyuScriptPlaying || window.SALES_SCRIPT_RUNNING) return;
+  tickInFlight = true;
   try {
     const result = await api('/api/interaction/tick', {});
     if (result.plan) { feed(`唤醒触发 · ${result.plan.trigger}`); await executePlan(result.plan); }
@@ -1207,6 +1210,7 @@ setInterval(async () => {
       await fallbackChatter();
     }
   } catch { /* 下一轮重试 */ }
+  finally { tickInFlight = false; }
   refreshFeed();
 }, 300);
 
@@ -1357,6 +1361,7 @@ function previewSubtitle(text) {
 async function playSuyuScript(mode, preset = 'suyu') {
   const live = mode === 'live';
   if (live && (!bridge?.isRunning?.() || !bridge?.isReady?.())) { toast('直播画面未就绪，请等 S2 首帧后再播放', true); return; }
+  interruptCurrentPlayback();
   const token = ++playbackToken;
   suyuScriptPlaying = true;
   const script = preset === 'hotdance' ? SUYU_HOT_SCRIPT : preset === 'xiaomei_chat' ? XIAOMEI_CHAT_SCRIPT : preset === 'xiaomei_clip' ? XIAOMEI_CLIP_SCRIPT : preset === 'xiaomei' ? XIAOMEI_SCRIPT : SUYU_SCRIPT;
@@ -1431,6 +1436,7 @@ let showroomSequenceToken = null;
 async function playShowroomSequence(sequence) {
   const token = { cancelled: false };
   showroomSequenceToken = token;
+  suyuScriptPlaying = true;
   const lines = (sequence?.lines || []).filter(Boolean);
   const fetchLine = async raw => {
     // TTS 不读「人设名」前缀，但句内文本保持完整，不按标点切开。
@@ -1456,6 +1462,7 @@ async function playShowroomSequence(sequence) {
     if (index < lines.length - 1) await sleep(2000);
   }
   if (showroomSequenceToken === token) showroomSequenceToken = null;
+  suyuScriptPlaying = false;
 }
 
 /* 自然对话动作线：按真实开播高频动作排权重，循环下发；复杂动作拆成短指令随机组合。 */
@@ -1522,6 +1529,7 @@ window.addEventListener('s2-live-ready', async () => {
     window.__showroomSequence = null;
     try { await playShowroomSequence(sequence); }
     catch (error) { feed(`样板间脚本播放失败：${error.message}`, 'err'); }
+    finally { suyuScriptPlaying = false; }
     return;
   }
   try {
